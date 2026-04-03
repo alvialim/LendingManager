@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "448883099305",
+    "project_id": "haftabookkmp",
+    "storage_bucket": "haftabookkmp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:448883099305:android:582f72e32b87082eb1cbb8",
+        "android_client_info": {
+          "package_name": "com.haftabook.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRFPTlprrLo9k_DU-R00Z8XtXGEEvdJPU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

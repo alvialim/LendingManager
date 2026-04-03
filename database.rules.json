@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "customers": {
+      ".read": true,
+      ".write": true
+    },
+    "loans": {
+      ".read": true,
+      ".write": true
+    },
+    "emis": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

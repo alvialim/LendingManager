@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Dev / testing — replace with auth-based rules before production.
+    match /customers/{customerId} {
+      allow read, write: if true;
+      match /loans/{loanId} {
+        allow read, write: if true;
+        match /emis/{emiId} {
+          allow read, write: if true;
+        }
+      }
+    }
+    // Legacy flat collections (old app data / outbox without nested paths)
+    match /loans/{docId} {
+      allow read, write: if true;
+    }
+    match /emis/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
