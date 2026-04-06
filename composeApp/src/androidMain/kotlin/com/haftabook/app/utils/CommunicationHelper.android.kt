@@ -1,39 +1,100 @@
 package com.haftabook.app.utils
 
-import android.os.Build
-import android.telephony.SmsManager
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import com.haftabook.app.AndroidAppContext
+import com.haftabook.app.domain.model.Customer
 
 actual object CommunicationHelper {
 
-    private const val ADMIN_NUMBER = "+919974373447"
+    private const val TAG = "Haftabook"
+
+    actual fun sendCustomerMessage(customer: Customer) {
+        val message = CustomerCommunicationText.buildCustomerShareMessage(customer)
+        val context = AndroidAppContext.applicationContext ?: return
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, message)
+        }
+        val chooser = Intent.createChooser(intent, "Share").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    actual fun openSmsToAdminWithCustomer(customer: Customer) {
+        val message = CustomerCommunicationText.buildCustomerSummaryMessage(customer)
+        val context = AndroidAppContext.applicationContext ?: return
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:${Uri.encode(CustomerCommunicationText.ADMIN_NUMBER)}")
+            putExtra("sms_body", message)
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     actual fun sendLoanAddedMessages(customerName: String, amount: Long) {
-        val message = "New Loan Added!\nCustomer: $customerName\nAmount: ₹$amount"
-        sendSMS(message)
+        Log.d(TAG, "New Loan Added! Customer: $customerName Amount: ₹$amount (no SMS permission)")
     }
 
     actual fun sendEmiAddedMessages(customerName: String, amount: Long, emiNumber: Int) {
-        val message = "EMI Paid!\nCustomer: $customerName\nEMI No: $emiNumber\nAmount: ₹$amount"
-        sendSMS(message)
+        Log.d(TAG, "EMI Paid! Customer: $customerName EMI No: $emiNumber Amount: ₹$amount (no SMS permission)")
     }
 
-    private fun sendSMS(message: String) {
+    actual fun shareEmiPaymentDetails(
+        emiNumber: Int,
+        loanNumber: Int,
+        customerName: String,
+        customerMobile: String,
+        amountFormatted: String,
+        dateFormatted: String,
+    ) {
+        val message = CustomerCommunicationText.buildEmiMessage(
+            emiNumber, loanNumber, customerName, customerMobile, amountFormatted, dateFormatted
+        )
         val context = AndroidAppContext.applicationContext ?: return
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, message)
+        }
+        val chooser = Intent.createChooser(intent, "Share").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         try {
-            val smsManager: SmsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                context.getSystemService(SmsManager::class.java)!!
-            } else {
-                @Suppress("DEPRECATION")
-                SmsManager.getDefault()
-            }
-            smsManager.sendTextMessage(
-                ADMIN_NUMBER,
-                null,
-                message,
-                null,
-                null
-            )
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    actual fun smsEmiPaymentToAdmin(
+        emiNumber: Int,
+        loanNumber: Int,
+        customerName: String,
+        customerMobile: String,
+        amountFormatted: String,
+        dateFormatted: String,
+    ) {
+        val message = CustomerCommunicationText.buildEmiMessage(
+            emiNumber, loanNumber, customerName, customerMobile, amountFormatted, dateFormatted
+        )
+        val context = AndroidAppContext.applicationContext ?: return
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:${Uri.encode(CustomerCommunicationText.EMI_ADMIN_NUMBER)}")
+            putExtra("sms_body", message)
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -7,6 +7,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+/** Paid totals and EMI/payment amounts (labels “Paid”, EMI ₹, etc.) app-wide. */
+val PaidAmountGreen = Color(0xFF388E3C)
+
+/** Floating action buttons: blue fill, white + icon. */
+val FabBlue = Color(0xFF0D6EFD)
+
 // Bright off‑white + bright blue palette used across Android, Desktop and Web.
 private val BrandBlue = Color(0xFF0D6EFD)      // primary bright blue
 private val BrandBlueDark = Color(0xFF0B5ED7) // darker for pressed / outlines

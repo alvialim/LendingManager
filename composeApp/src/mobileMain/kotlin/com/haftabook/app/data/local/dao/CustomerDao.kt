@@ -15,10 +15,10 @@ interface CustomerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCustomer(customer: CustomerEntity): Long
 
-    @Query("SELECT * FROM customers ORDER BY name ASC")
+    @Query("SELECT * FROM customers ORDER BY createdDate DESC")
     fun getAllCustomers(): Flow<List<CustomerEntity>>
 
-    @Query("SELECT * FROM customers")
+    @Query("SELECT * FROM customers ORDER BY createdDate DESC")
     suspend fun getAllCustomersList(): List<CustomerEntity>
 
     @Query(
@@ -29,7 +29,7 @@ interface CustomerDao {
             (SELECT COALESCE(SUM(remainingAmount), 0) FROM loans WHERE customerId = c.id) AS totalDue,
             (SELECT COUNT(*) FROM loans WHERE customerId = c.id) AS totalLoans
         FROM customers c
-        ORDER BY c.name ASC
+        ORDER BY c.createdDate DESC
         """
     )
     fun getCustomersWithTotals(): Flow<List<CustomerWithTotals>>
@@ -43,7 +43,7 @@ interface CustomerDao {
             (SELECT COALESCE(SUM(remainingAmount), 0) FROM loans WHERE customerId = c.id) AS totalDue,
             (SELECT COUNT(*) FROM loans WHERE customerId = c.id) AS totalLoans
         FROM customers c
-        ORDER BY c.name ASC
+        ORDER BY c.createdDate DESC
         """
     )
     suspend fun getCustomersWithTotalsSnapshot(): List<CustomerWithTotals>

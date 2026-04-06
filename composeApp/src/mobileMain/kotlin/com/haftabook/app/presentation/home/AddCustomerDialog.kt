@@ -3,7 +3,6 @@ package com.haftabook.app.presentation.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -20,13 +19,12 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AddCustomerDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String) -> Unit,
+    onConfirm: (String, String) -> Unit,
     errorMessage: String?
 ) {
     var name by remember { mutableStateOf("") }
     var mobile by remember { mutableStateOf("") }
-    var loanType by remember { mutableStateOf("MONTHLY") }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -75,29 +73,11 @@ fun AddCustomerDialog(
                         errorBorderColor = MaterialTheme.colorScheme.error,
                     )
                 )
-                
-                // Loan type selection
-                Text("Loan Type:")
-                Row (verticalAlignment =Alignment.CenterVertically){
-
-                    RadioButton(
-                        selected = loanType == "MONTHLY",
-                        onClick = { loanType = "MONTHLY" }
-                    )
-                    Text("Monthly")
-                    Spacer(Modifier.width(16.dp))
-
-                    RadioButton(
-                        selected = loanType == "DAILY",
-                        onClick = { loanType = "DAILY" }
-                    )
-                    Text("Daily")
-                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(name, mobile, loanType) }
+                onClick = { onConfirm(name, mobile) }
             ) {
                 Text("Add")
             }

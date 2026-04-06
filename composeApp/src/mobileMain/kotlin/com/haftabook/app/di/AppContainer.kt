@@ -43,6 +43,7 @@ class AppContainer(
     val getEmisUseCase = GetEmisUseCase(emiRepository)
     val addLoanUseCase = AddLoanUseCase(loanRepository)
     val addEmiUseCase = AddEmiUseCase(emiRepository, loanRepository)
+    val markEmiSlotPaidUseCase = MarkEmiSlotPaidUseCase(emiRepository, loanRepository)
     val deleteLoanUseCase = DeleteLoanUseCase(loanRepository)
 
     val getAnalyticsUseCase = GetAnalyticsUseCase(loanRepository, emiRepository, customerRepository)

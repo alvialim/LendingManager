@@ -95,7 +95,7 @@ fun AppNavigation(
                     getLoansUseCase = container.getLoansUseCase,
                     getEmisUseCase = container.getEmisUseCase,
                     addLoanUseCase = container.addLoanUseCase,
-                    addEmiUseCase = container.addEmiUseCase,
+                    markEmiSlotPaidUseCase = container.markEmiSlotPaidUseCase,
                     deleteLoanUseCase = container.deleteLoanUseCase
                 )
             }

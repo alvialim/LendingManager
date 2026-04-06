@@ -30,6 +30,9 @@ class EmiRepository(
     suspend fun getTotalPaid(loanId: Long): Long =
         emiDao.getTotalPaidForLoan(loanId).first() ?: 0L
 
+    suspend fun getEmiByLoanAndNumber(loanId: Long, emiNumber: Int): EmiEntity? =
+        emiDao.getEmiByLoanAndNumber(loanId, emiNumber)
+
     suspend fun deleteEmisByLoan(loanId: Long) {
         emiDao.deleteEmisForLoan(loanId)
     }

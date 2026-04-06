@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.haftabook.app.domain.model.Customer
 import com.haftabook.app.domain.model.Emi
 import com.haftabook.app.domain.model.Loan
-import com.haftabook.app.domain.usecase.AddEmiUseCase
 import com.haftabook.app.domain.usecase.AddLoanUseCase
 import com.haftabook.app.domain.usecase.DeleteLoanUseCase
 import com.haftabook.app.domain.usecase.GetCustomerDetailsUseCase
 import com.haftabook.app.domain.usecase.GetEmisUseCase
 import com.haftabook.app.domain.usecase.GetLoansUseCase
+import com.haftabook.app.domain.usecase.MarkEmiSlotPaidUseCase
 import com.haftabook.app.utils.CommunicationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,23 +21,18 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * UPDATED: Added deleteLoanUseCase
- */
 class CustomerDetailViewModel(
     private val customerId: Long,
     private val getCustomerDetailsUseCase: GetCustomerDetailsUseCase,
     private val getLoansUseCase: GetLoansUseCase,
     private val getEmisUseCase: GetEmisUseCase,
     private val addLoanUseCase: AddLoanUseCase,
-    private val addEmiUseCase: AddEmiUseCase,
+    private val markEmiSlotPaidUseCase: MarkEmiSlotPaidUseCase,
     private val deleteLoanUseCase: DeleteLoanUseCase
 ) : ViewModel() {
 
     var customer by mutableStateOf<Customer?>(null)
     var showAddLoanDialog by mutableStateOf(false)
-    var showAddEmiDialog by mutableStateOf(false)
-    var selectedLoanId by mutableStateOf<Long?>(null)
     var errorMessage by mutableStateOf<String?>(null)
     var isLoading by mutableStateOf(false)
 
@@ -63,6 +58,17 @@ class CustomerDetailViewModel(
         }
     }
 
+    private fun restartEmiCollection(loanId: Long) {
+        emisCollectionJob?.cancel()
+        emisCollectionJob = viewModelScope.launch(Dispatchers.Default) {
+            getEmisUseCase.execute(loanId).collect { emis ->
+                withContext(Dispatchers.Main) {
+                    expandedLoanEmis.value = emis
+                }
+            }
+        }
+    }
+
     fun onLoanClick(loanId: Long) {
         emisCollectionJob?.cancel()
         if (expandedLoanId == loanId) {
@@ -71,13 +77,7 @@ class CustomerDetailViewModel(
             return
         }
         expandedLoanId = loanId
-        emisCollectionJob = viewModelScope.launch(Dispatchers.Default) {
-            getEmisUseCase.execute(loanId).collect { emis ->
-                withContext(Dispatchers.Main) {
-                    expandedLoanEmis.value = emis
-                }
-            }
-        }
+        restartEmiCollection(loanId)
     }
 
     fun onDeleteLoanClick(loanId: Long) {
@@ -124,43 +124,41 @@ class CustomerDetailViewModel(
         }
     }
 
-    fun onAddEmiClick(loanId: Long) {
-        selectedLoanId = loanId
-        showAddEmiDialog = true
-    }
-
-    fun onAddEmi(amount: Long, emiDate: Long) {
+    fun onMarkEmiSlotPaid(loanId: Long, emiNumber: Int) {
         viewModelScope.launch {
-            selectedLoanId?.let { loanId ->
-                isLoading = true
-                val result = withContext(Dispatchers.IO) {
-                    addEmiUseCase.execute(loanId, amount, emiDate)
-                }
-                if (result.isSuccess) {
-                    showAddEmiDialog = false
-                    errorMessage = null
-                    val lastSelectedLoanId = selectedLoanId
-                    selectedLoanId = null
-                    loadCustomer()
-
-                    val emiNumber = expandedLoanEmis.value.size + 1
-                    CommunicationHelper.sendEmiAddedMessages(customer?.name ?: "Unknown", amount, emiNumber)
-
-                    if (expandedLoanId == lastSelectedLoanId) {
-                        onLoanClick(lastSelectedLoanId!!)
-                    }
-                } else {
-                    errorMessage = result.exceptionOrNull()?.message
-                }
-                isLoading = false
+            isLoading = true
+            val result = withContext(Dispatchers.IO) {
+                markEmiSlotPaidUseCase.execute(
+                    loanId,
+                    emiNumber,
+                    customer?.loanType ?: "MONTHLY"
+                )
             }
+            if (result.isSuccess) {
+                errorMessage = null
+                val paidAmount = result.getOrNull() ?: 0L
+                loadCustomer()
+                if (expandedLoanId == loanId) {
+                    restartEmiCollection(loanId)
+                }
+                CommunicationHelper.sendEmiAddedMessages(
+                    customer?.name ?: "Unknown",
+                    paidAmount,
+                    emiNumber
+                )
+            } else {
+                errorMessage = result.exceptionOrNull()?.message
+            }
+            isLoading = false
         }
     }
 
     fun onDismissDialog() {
         showAddLoanDialog = false
-        showAddEmiDialog = false
-        selectedLoanId = null
+        errorMessage = null
+    }
+
+    fun clearErrorMessage() {
         errorMessage = null
     }
 

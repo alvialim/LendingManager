@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.haftabook.app.ui.PaidAmountGreen
 import com.haftabook.app.utils.DateHelper
 import com.haftabook.app.presentation.components.DatePickerDialog
 import kotlin.math.ceil
@@ -20,11 +21,18 @@ fun AddLoanDialog(
     errorMessage: String?
 ) {
     var amount by remember { mutableStateOf("") }
-    var loanStartDate by remember { mutableStateOf(DateHelper.now()) }
-    var emiStartDate by remember { mutableStateOf(DateHelper.now()) }
+    val dialogBaselineLoanStart = remember { DateHelper.now() }
+    var loanStartDate by remember { mutableStateOf(dialogBaselineLoanStart) }
+    var emiStartDate by remember {
+        mutableStateOf(DateHelper.firstEmiDateFromLoanStart(dialogBaselineLoanStart, loanType))
+    }
     var totalEmis by remember { mutableStateOf("") }
     var showLoanDatePicker by remember { mutableStateOf(false) }
     var showEmiDatePicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(loanStartDate, loanType) {
+        emiStartDate = DateHelper.firstEmiDateFromLoanStart(loanStartDate, loanType)
+    }
 
     val lastEmiDate = remember(emiStartDate, totalEmis, loanType) {
         val emis = totalEmis.toIntOrNull() ?: 0
@@ -102,7 +110,7 @@ fun AddLoanDialog(
                 OutlinedTextField(
                     value = DateHelper.formatDate(emiStartDate),
                     onValueChange = {},
-                    label = { Text("EMI Start Date") },
+                    label = { Text("First EMI Date") },
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = { showEmiDatePicker = true }) {
@@ -141,12 +149,12 @@ fun AddLoanDialog(
                         Text(
                             text = "EMI Amount: ₹$emiAmount",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.secondary
+                            color = PaidAmountGreen
                         )
                         Text(
                             text = "Last EMI Date: ${DateHelper.formatDate(lastEmiDate)}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

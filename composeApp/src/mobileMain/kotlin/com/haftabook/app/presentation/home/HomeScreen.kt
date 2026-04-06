@@ -12,17 +12,27 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Sms
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.haftabook.app.domain.model.Customer
+import com.haftabook.app.presentation.components.CustomerCardActionButton
+import com.haftabook.app.presentation.components.CustomerCardActionHeight
+import com.haftabook.app.presentation.components.CustomerProgressBar
 import com.haftabook.app.presentation.components.DeleteActionButton
+import com.haftabook.app.presentation.theme.accentBorderForCustomer
+import com.haftabook.app.presentation.theme.lightActionButtonBackground
+import com.haftabook.app.ui.FabBlue
+import com.haftabook.app.ui.PaidAmountGreen
+import com.haftabook.app.utils.CommunicationHelper
 import com.haftabook.app.utils.NumberHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +48,7 @@ fun HomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     var isSearchActive by remember { mutableStateOf(false) }
     var customerToDelete by remember { mutableStateOf<Customer?>(null) }
-    
+
     Scaffold(
         topBar = {
             if (isSearchActive) {
@@ -70,9 +80,11 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.onAddCustomerClick() }
+                onClick = { viewModel.onAddCustomerClick() },
+                containerColor = FabBlue,
+                contentColor = Color.White,
             ) {
-                Icon(Icons.Default.Add, "Add")
+                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
             }
         }
     ) { padding ->
@@ -108,7 +120,9 @@ fun HomeScreen(
                 CustomerList(
                     customers = customers,
                     onCustomerClick = { onCustomerClick(it.id) },
-                    onDeleteClick = { customerToDelete = it }
+                    onDeleteClick = { customerToDelete = it },
+                    onSendMessage = { CommunicationHelper.sendCustomerMessage(it) },
+                    onSendSms = { CommunicationHelper.openSmsToAdminWithCustomer(it) }
                 )
             }
         }
@@ -138,8 +152,8 @@ fun HomeScreen(
     if (viewModel.showAddDialog) {
         AddCustomerDialog(
             onDismiss = { viewModel.onDismissDialog() },
-            onConfirm = { name, mobile, type ->
-                viewModel.onAddCustomer(name, mobile, type)
+            onConfirm = { name, mobile ->
+                viewModel.onAddCustomer(name, mobile)
             },
             errorMessage = viewModel.errorMessage
         )
@@ -162,13 +176,6 @@ fun HomeScreen(
     }
 }
 
-private val CustomerProgressPaidOlive = Color(0xFF6B8E23)
-private val CustomerProgressRemainingLightRed = Color(0xFFFFCDD2)
-private val CustomerProgressTrackGrey = Color(0xFFE8E8E8)
-private val TotalLoanChipTextBlue = Color(0xFF1976D2)
-/** Same height for loan-count badge and delete control so they align vertically. */
-private val CustomerCardActionHeight = 36.dp
-
 @Composable
 fun HomeToolbarTotalsRow(
     totals: HomeTabTotals,
@@ -187,7 +194,7 @@ fun HomeToolbarTotalsRow(
         ToolbarTotalColumn(
             label = "Paid",
             amount = totals.totalPaid,
-            amountColor = MaterialTheme.colorScheme.primary
+            amountColor = PaidAmountGreen
         )
         ToolbarTotalColumn(
             label = "Due",
@@ -270,10 +277,14 @@ fun SearchTopBar(
 fun CustomerList(
     customers: List<Customer>,
     onCustomerClick: (Customer) -> Unit,
-    onDeleteClick: (Customer) -> Unit
+    onDeleteClick: (Customer) -> Unit,
+    onSendMessage: (Customer) -> Unit,
+    onSendSms: (Customer) -> Unit,
 ) {
     val click by rememberUpdatedState(onCustomerClick)
     val delete by rememberUpdatedState(onDeleteClick)
+    val sendMessage by rememberUpdatedState(onSendMessage)
+    val sendSms by rememberUpdatedState(onSendSms)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -299,54 +310,10 @@ fun CustomerList(
                 CustomerCard(
                     customer = customer,
                     onClick = { click(customer) },
-                    onDelete = { delete(customer) }
+                    onDelete = { delete(customer) },
+                    onSendMessage = { sendMessage(customer) },
+                    onSendSms = { sendSms(customer) }
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CustomerCardProgressBar(customer: Customer) {
-    val given = customer.totalGiven
-    val paid = customer.totalPaid
-    val due = customer.totalDue
-    val (paidF, dueF, hasPaidProgress) = remember(given, paid, due) {
-        val paidF = if (given > 0) paid.toFloat() / given.toFloat() else 0f
-        val dueF = if (given > 0) due.toFloat() / given.toFloat() else 0f
-        val hasPaidProgress = given > 0 && paid > 0
-        Triple(paidF, dueF, hasPaidProgress)
-    }
-    val shape = RoundedCornerShape(4.dp)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(shape)
-            .background(
-                if (hasPaidProgress) CustomerProgressTrackGrey
-                else CustomerProgressRemainingLightRed
-            )
-    ) {
-        if (hasPaidProgress) {
-            Row(modifier = Modifier.fillMaxSize()) {
-                if (paidF > 0f) {
-                    Box(
-                        modifier = Modifier
-                            .weight(paidF)
-                            .fillMaxHeight()
-                            .background(CustomerProgressPaidOlive)
-                    )
-                }
-                if (dueF > 0f) {
-                    Box(
-                        modifier = Modifier
-                            .weight(dueF)
-                            .fillMaxHeight()
-                            .background(CustomerProgressRemainingLightRed)
-                    )
-                }
             }
         }
     }
@@ -354,7 +321,13 @@ private fun CustomerCardProgressBar(customer: Customer) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomerCard(customer: Customer, onClick: () -> Unit, onDelete: () -> Unit) {
+fun CustomerCard(
+    customer: Customer,
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
+    onSendMessage: () -> Unit,
+    onSendSms: () -> Unit,
+) {
     val givenStr = remember(customer.totalGiven) { NumberHelper.formatMoney(customer.totalGiven) }
     val paidStr = remember(customer.totalPaid) { NumberHelper.formatMoney(customer.totalPaid) }
     val dueStr = remember(customer.totalDue) { NumberHelper.formatMoney(customer.totalDue) }
@@ -365,7 +338,7 @@ fun CustomerCard(customer: Customer, onClick: () -> Unit, onDelete: () -> Unit) 
             containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        border = BorderStroke(1.dp, Color(0xFF87CEFA))
+        border = BorderStroke(1.dp, Color(0xFFE6F1FC))
     ) {
         Column(
             modifier = Modifier
@@ -381,62 +354,78 @@ fun CustomerCard(customer: Customer, onClick: () -> Unit, onDelete: () -> Unit) 
                     Text(text = customer.name, style = MaterialTheme.typography.titleLarge)
                     Text(text = customer.mobile, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.height(CustomerCardActionHeight)
                 ) {
-                    if (customer.totalLoans > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            border = BorderStroke(1.dp, TotalLoanChipTextBlue),
-                            modifier = Modifier.height(CustomerCardActionHeight)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .padding(horizontal = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${customer.totalLoans} Loans",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = TotalLoanChipTextBlue
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${customer.totalLoans} Loans",
+                            style = MaterialTheme.typography.labelLarge,
+                            )
                     }
-                    DeleteActionButton(
-                        onClick = onDelete,
-                        modifier = Modifier.height(CustomerCardActionHeight),
-                        matchChipRowSize = false,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        shape = RoundedCornerShape(8.dp),
-                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            CustomerCardProgressBar(customer = customer)
+            Column {
+                CustomerProgressBar(customer = customer)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("Given", style = MaterialTheme.typography.labelSmall)
+                        Text("₹$givenStr", style = MaterialTheme.typography.bodyLarge)
+                    }
+                    Column {
+                        Text("Paid", style = MaterialTheme.typography.labelSmall)
+                        Text("₹$paidStr", style = MaterialTheme.typography.bodyLarge, color = PaidAmountGreen)
+                    }
+                    Column {
+                        Text("Due", style = MaterialTheme.typography.labelSmall)
+                        Text("₹$dueStr", style = MaterialTheme.typography.bodyLarge, color = Color(0xFFF44336))
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Text("Given", style = MaterialTheme.typography.labelSmall)
-                    Text("₹$givenStr", style = MaterialTheme.typography.bodyLarge)
-                }
-                Column {
-                    Text("Paid", style = MaterialTheme.typography.labelSmall)
-                    Text("₹$paidStr", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-                }
-                Column {
-                    Text("Due", style = MaterialTheme.typography.labelSmall)
-                    Text("₹$dueStr", style = MaterialTheme.typography.bodyLarge, color = Color(0xFFF44336))
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CustomerCardActionButton(
+                    icon = Icons.Outlined.Share,
+                    contentDescription = "Share",
+                    onClick = onSendMessage,
+                    backgroundColor =     Color(0xFFB0DBFF),
+
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                CustomerCardActionButton(
+                    icon = Icons.Outlined.Sms,
+                    contentDescription = "SMS",
+                    onClick = onSendSms,
+                    backgroundColor =     Color(0xFFC6FFC8),
+
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                CustomerCardActionButton(
+                    icon = Icons.Outlined.Delete,
+                    contentDescription = "Delete",
+                    onClick = onDelete,
+                    backgroundColor =     Color(0xFFFFB7CC),
+
+                )
             }
         }
     }

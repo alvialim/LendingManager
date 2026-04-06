@@ -15,8 +15,11 @@ interface EmiDao {
     @Query("SELECT * FROM emis WHERE id = :id")
     suspend fun getEmiById(id: Long): EmiEntity?
 
-    @Query("SELECT * FROM emis WHERE loanId = :loanId ORDER BY emiDate DESC")
+    @Query("SELECT * FROM emis WHERE loanId = :loanId ORDER BY emiNumber ASC")
     fun getEmisForLoan(loanId: Long): Flow<List<EmiEntity>>
+
+    @Query("SELECT * FROM emis WHERE loanId = :loanId AND emiNumber = :emiNumber LIMIT 1")
+    suspend fun getEmiByLoanAndNumber(loanId: Long, emiNumber: Int): EmiEntity?
 
     @Query("SELECT COUNT(*) + 1 FROM emis WHERE loanId = :loanId")
     suspend fun getNextEmiNumber(loanId: Long): Int

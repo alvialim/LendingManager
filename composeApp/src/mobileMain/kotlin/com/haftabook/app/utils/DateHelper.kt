@@ -45,4 +45,24 @@ object DateHelper {
         val newDate = date.plusMonths(months.toLong())
         return newDate.atStartOfDay(zone).toInstant().toEpochMilli()
     }
+
+    /**
+     * First EMI due date from loan start: DAILY = next calendar day; MONTHLY = same day next month.
+     */
+    fun firstEmiDateFromLoanStart(loanStartDate: Long, loanType: String): Long {
+        return when (loanType.uppercase()) {
+            "DAILY" -> addDays(loanStartDate, 1)
+            "MONTHLY" -> addMonths(loanStartDate, 1)
+            else -> addMonths(loanStartDate, 1)
+        }
+    }
+
+    /** Due date for EMI #emiNumber (1-based), from first EMI date. */
+    fun scheduledEmiDate(emiStartDate: Long, emiNumber: Int, loanType: String): Long {
+        if (emiNumber <= 1) return emiStartDate
+        return when (loanType.uppercase()) {
+            "DAILY" -> addDays(emiStartDate, emiNumber - 1)
+            else -> addMonths(emiStartDate, emiNumber - 1)
+        }
+    }
 }

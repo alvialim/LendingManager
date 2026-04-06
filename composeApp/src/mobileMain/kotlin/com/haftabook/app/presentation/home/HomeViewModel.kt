@@ -152,11 +152,12 @@ class HomeViewModel(
         }
     }
 
-    fun onAddCustomer(name: String, mobile: String, type: String) {
+    fun onAddCustomer(name: String, mobile: String) {
+        val loanType = if (selectedTabFlow.value == 0) "MONTHLY" else "DAILY"
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
             try {
-                val result = addCustomerUseCase.execute(name, mobile, type)
+                val result = addCustomerUseCase.execute(name, mobile, loanType)
                 if (result.isSuccess) {
                     val newId = result.getOrNull()!!
                     pendingNewCustomerId = newId

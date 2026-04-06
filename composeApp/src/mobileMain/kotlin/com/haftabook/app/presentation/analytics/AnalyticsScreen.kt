@@ -38,11 +38,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.haftabook.app.domain.usecase.AnalyticsBucket
 import com.haftabook.app.domain.usecase.AnalyticsGranularity
+import com.haftabook.app.ui.PaidAmountGreen
 import com.haftabook.app.utils.NumberHelper
 
 /** Given — blue, Paid — green, Due — red, Customers — purple. */
 private val GivenBarBlue = Color(0xFF1976D2)
-private val PaidBarGreen = Color(0xFF388E3C)
 private val DueBarRed = Color(0xFFD32F2F)
 private val CustomersBarPurple = Color(0xFF7E57C2)
 
@@ -102,7 +102,7 @@ fun AnalyticsScreen(
 
             LegendRow(
                 givenColor = GivenBarBlue,
-                paidColor = PaidBarGreen,
+                paidColor = PaidAmountGreen,
                 dueColor = DueBarRed,
                 customersColor = CustomersBarPurple
             )
@@ -145,7 +145,7 @@ fun AnalyticsScreen(
                     maxMoneyValue = maxVal,
                     maxCustomerCount = maxCount,
                     givenColor = GivenBarBlue,
-                    paidColor = PaidBarGreen,
+                    paidColor = PaidAmountGreen,
                     dueColor = DueBarRed,
                     customersColor = CustomersBarPurple,
                     trackColor = trackColor,

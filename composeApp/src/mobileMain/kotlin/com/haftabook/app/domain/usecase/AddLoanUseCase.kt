@@ -23,7 +23,9 @@ class AddLoanUseCase(
         // Validation
         if (amount <= 0) return Result.failure(Exception("Amount must be > 0"))
         if (totalEmis <= 0) return Result.failure(Exception("Total EMIs must be > 0"))
-        if (emiStartDate < loanStartDate) return Result.failure(Exception("EMI start date cannot be before loan start date"))
+        if (emiStartDate < loanStartDate) {
+            return Result.failure(Exception("First EMI date cannot be before loan start date"))
+        }
 
         // Calculate EMI Amount (Business Logic)
         // Using ceiling to ensure the total amount is covered
