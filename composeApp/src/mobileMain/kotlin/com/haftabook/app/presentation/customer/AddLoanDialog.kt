@@ -1,12 +1,14 @@
 package com.haftabook.app.presentation.customer
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.haftabook.app.ui.PaidAmountGreen
 import com.haftabook.app.utils.DateHelper
@@ -80,6 +82,9 @@ fun AddLoanDialog(
                     label = { Text("Loan Amount (₹)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF87CEFA),
                         unfocusedBorderColor = Color(0xFF87CEFA),
@@ -136,6 +141,9 @@ fun AddLoanDialog(
                     label = { Text("Total EMIs") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF87CEFA),
                         unfocusedBorderColor = Color(0xFF87CEFA),

@@ -21,33 +21,43 @@ private const val FIREBASE_APP_ID: String = "1:448883099305:android:582f72e32b87
 
 internal fun ensureDesktopFirebaseInitialized() {
     if (desktopFirebaseInitialized) return
-    FirebasePlatform.initializeFirebasePlatform(object : FirebasePlatform() {
-        private val storage = mutableMapOf<String, String>()
-        override fun store(key: String, value: String) {
-            storage[key] = value
+    runCatching {
+        FirebasePlatform.initializeFirebasePlatform(object : FirebasePlatform() {
+            private val storage = mutableMapOf<String, String>()
+            override fun store(key: String, value: String) {
+                storage[key] = value
+            }
+
+            override fun retrieve(key: String): String? = storage[key]
+
+            override fun clear(key: String) {
+                storage.remove(key)
+            }
+
+            override fun log(msg: String) {
+                println("[Haftabook][Firebase] $msg")
+            }
+        })
+
+        val options = FirebaseOptions.Builder()
+            .setApplicationId(FIREBASE_APP_ID)
+            .setApiKey(FIREBASE_API_KEY)
+            .setDatabaseUrl(HAFTABOOK_REALTIME_DATABASE_URL)
+            .setProjectId(FIREBASE_PROJECT_ID)
+            .setStorageBucket(FIREBASE_STORAGE_BUCKET)
+            .setGcmSenderId(FIREBASE_GCM_SENDER_ID)
+            .build()
+
+        // GitLive JVM (firebase-java-sdk) exposes Android-like stubs; init requires a Context.
+        val app = Application()
+        if (FirebaseApp.getApps(app).isEmpty()) {
+            FirebaseApp.initializeApp(app, options)
         }
 
-        override fun retrieve(key: String): String? = storage[key]
-
-        override fun clear(key: String) {
-            storage.remove(key)
-        }
-
-        override fun log(msg: String) {
-            println("[Haftabook][Firebase] $msg")
-        }
-    })
-    val options = FirebaseOptions.Builder()
-        .setApplicationId(FIREBASE_APP_ID)
-        .setApiKey(FIREBASE_API_KEY)
-        .setDatabaseUrl(HAFTABOOK_REALTIME_DATABASE_URL)
-        .setProjectId(FIREBASE_PROJECT_ID)
-        .setStorageBucket(FIREBASE_STORAGE_BUCKET)
-        .setGcmSenderId(FIREBASE_GCM_SENDER_ID)
-        .build()
-    val app = Application()
-    if (FirebaseApp.getApps(app).isEmpty()) {
-        FirebaseApp.initializeApp(app, options)
+        desktopFirebaseInitialized = true
+    }.onFailure { e ->
+        // Keep running, but make failure visible in packaged desktop apps.
+        println("[Haftabook][Firebase] Desktop init failed: ${e.message}")
+        e.printStackTrace()
     }
-    desktopFirebaseInitialized = true
 }
