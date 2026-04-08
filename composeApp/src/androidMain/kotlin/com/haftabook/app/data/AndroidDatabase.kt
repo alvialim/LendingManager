@@ -4,11 +4,12 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.haftabook.app.data.local.MIGRATION_2_3
+import com.haftabook.app.data.local.MIGRATION_3_4
 
 fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
     return Room.databaseBuilder<AppDatabase>(
         context = context.applicationContext,
         name = DATABASE_NAME
     )
-    .addMigrations(MIGRATION_2_3)
+    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
 }

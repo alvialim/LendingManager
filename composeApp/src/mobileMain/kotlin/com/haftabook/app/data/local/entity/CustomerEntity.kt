@@ -24,7 +24,9 @@ data class CustomerEntity(
     val name: String,
     val mobile: String,
     val loanType: String,      // "DAILY" or "MONTHLY"
-    val createdDate: Long
+    val createdDate: Long,
+    /** Absolute file path to a locally stored JPEG profile photo (optional). */
+    val photoPath: String? = null
 )
 
 // Simple: Just data, nothing else

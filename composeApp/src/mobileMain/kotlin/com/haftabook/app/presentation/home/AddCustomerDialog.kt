@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.haftabook.app.platform.rememberCustomerPhotoPicker
+import com.haftabook.app.presentation.components.CustomerAvatarBytes
 
 /**
  * WHAT: Dialog to add customer
@@ -21,11 +23,26 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AddCustomerDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit,
+    onConfirm: (String, String, ByteArray?) -> Unit,
     errorMessage: String?
 ) {
     var name by remember { mutableStateOf("") }
     var mobile by remember { mutableStateOf("") }
+    var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var showPhotoPicker by remember { mutableStateOf(false) }
+    var photoError by remember { mutableStateOf<String?>(null) }
+
+    val picker = rememberCustomerPhotoPicker(
+        onImageBytes = { bytes ->
+            photoBytes = bytes
+            photoError = null
+            showPhotoPicker = false
+        },
+        onError = { msg ->
+            photoError = msg
+            showPhotoPicker = false
+        }
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -41,6 +58,27 @@ fun AddCustomerDialog(
                         text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                if (photoError != null) {
+                    Text(
+                        text = photoError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    // Optional photo picker (placeholder when no photo chosen yet).
+                    CustomerAvatarBytes(
+                        photoBytes = photoBytes,
+                        displayName = name,
+                        modifier = Modifier.size(60.dp),
+                        onClick = { showPhotoPicker = true }
                     )
                 }
                 
@@ -82,7 +120,7 @@ fun AddCustomerDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(name, mobile) }
+                onClick = { onConfirm(name, mobile, photoBytes) }
             ) {
                 Text("Add")
             }
@@ -93,6 +131,20 @@ fun AddCustomerDialog(
             }
         }
     )
+
+    if (showPhotoPicker) {
+        AlertDialog(
+            onDismissRequest = { showPhotoPicker = false },
+            title = { Text("Customer photo") },
+            text = { Text("Choose a photo (optional)") },
+            confirmButton = {
+                TextButton(onClick = { picker.pickFromGallery() }) { Text("Gallery") }
+            },
+            dismissButton = {
+                TextButton(onClick = { picker.captureFromCamera() }) { Text("Camera") }
+            }
+        )
+    }
 }
 
 /**

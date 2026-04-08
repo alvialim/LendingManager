@@ -19,12 +19,14 @@ import com.haftabook.app.presentation.home.HomeScreen
 import com.haftabook.app.presentation.home.HomeViewModel
 import com.haftabook.app.presentation.analytics.AnalyticsScreen
 import com.haftabook.app.presentation.analytics.AnalyticsViewModel
+import com.haftabook.app.presentation.components.CustomerPhotoZoomScreen
 import com.haftabook.app.presentation.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 private sealed interface AppDestination {
     data object Home : AppDestination
     data class CustomerDetail(val customerId: Long) : AppDestination
+    data class CustomerPhoto(val photoPath: String) : AppDestination
     data object Settings : AppDestination
     data object Analytics : AppDestination
 }
@@ -70,6 +72,7 @@ fun AppNavigation(
                 HomeViewModel(
                     getCustomersUseCase = container.getCustomersUseCase,
                     addCustomerUseCase = container.addCustomerUseCase,
+                    updateCustomerPhotoUseCase = container.updateCustomerPhotoUseCase,
                     deleteCustomerUseCase = container.deleteCustomerUseCase,
                     requestSyncNow = { container.requestSyncNow() },
                 )
@@ -79,6 +82,9 @@ fun AppNavigation(
                 onOpenDrawer = { openDrawer() },
                 onCustomerClick = { customerId ->
                     stack = stack + AppDestination.CustomerDetail(customerId)
+                },
+                onCustomerPhotoClick = { path ->
+                    stack = stack + AppDestination.CustomerPhoto(path)
                 }
             )
         }
@@ -96,6 +102,7 @@ fun AppNavigation(
                     getEmisUseCase = container.getEmisUseCase,
                     addLoanUseCase = container.addLoanUseCase,
                     markEmiSlotPaidUseCase = container.markEmiSlotPaidUseCase,
+                    updateCustomerPhotoUseCase = container.updateCustomerPhotoUseCase,
                     deleteLoanUseCase = container.deleteLoanUseCase
                 )
             }
@@ -105,6 +112,18 @@ fun AppNavigation(
                     if (stack.size > 1) {
                         stack = stack.dropLast(1)
                     }
+                }
+            )
+        }
+
+        is AppDestination.CustomerPhoto -> {
+            PlatformBackHandler(enabled = stack.size > 1) {
+                stack = stack.dropLast(1)
+            }
+            CustomerPhotoZoomScreen(
+                photoPath = current.photoPath,
+                onBack = {
+                    if (stack.size > 1) stack = stack.dropLast(1)
                 }
             )
         }

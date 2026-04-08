@@ -44,6 +44,13 @@ class CustomerRepository(
         }
     }
 
+    suspend fun updateCustomerPhotoPath(customerId: Long, photoPath: String?) {
+        val now = currentTimeMillis()
+        customerDao.updateCustomerPhotoPath(customerId, photoPath, now)
+        // Keep remote sync payload compatible: customer remote model has no photoPath.
+        // We still bump updatedAt so local sort/merges behave consistently.
+    }
+
     suspend fun getCustomer(id: Long): CustomerEntity? = customerDao.getCustomerById(id)
 
     suspend fun getAllCustomers(): List<CustomerEntity> = customerDao.getAllCustomersList()

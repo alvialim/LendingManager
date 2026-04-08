@@ -48,6 +48,7 @@ class GetCustomersUseCase(
             name = entity.name,
             mobile = entity.mobile,
             loanType = entity.loanType,
+            photoPath = entity.photoPath,
             totalGiven = totalGiven,
             totalPaid = totalGiven - totalDue,
             totalDue = totalDue,

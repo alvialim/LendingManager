@@ -23,7 +23,7 @@ fun main() = application {
 
     Window(
         onCloseRequest = ::exitApplication,
-        title = "Haftabook",
+        title = "Star Group",
     ) {
         AppRoot()
     }

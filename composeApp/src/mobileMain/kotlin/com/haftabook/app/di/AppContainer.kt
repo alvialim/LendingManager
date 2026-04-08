@@ -32,6 +32,7 @@ class AppContainer(
     // Use Cases
     val getCustomersUseCase = GetCustomersUseCase(customerRepository)
     val addCustomerUseCase = AddCustomerUseCase(customerRepository)
+    val updateCustomerPhotoUseCase = UpdateCustomerPhotoUseCase(customerRepository)
     val deleteCustomerUseCase = DeleteCustomerUseCase(customerRepository)
 
     val getCustomerDetailsUseCase = GetCustomerDetailsUseCase(

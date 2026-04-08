@@ -19,7 +19,7 @@ fun AppDrawerContent(
 ) {
     ModalDrawerSheet {
         Text(
-            text = "Haftabook",
+            text = "Star Group",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp)
         )

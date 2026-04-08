@@ -32,6 +32,7 @@ import com.haftabook.app.presentation.theme.accentBorderForCustomer
 import com.haftabook.app.presentation.theme.lightActionButtonBackground
 import com.haftabook.app.ui.FabBlue
 import com.haftabook.app.ui.PaidAmountGreen
+import com.haftabook.app.platform.RequestMediaPermissionsOnHome
 import com.haftabook.app.utils.CommunicationHelper
 import com.haftabook.app.utils.NumberHelper
 
@@ -40,8 +41,10 @@ import com.haftabook.app.utils.NumberHelper
 fun HomeScreen(
     viewModel: HomeViewModel,
     onOpenDrawer: () -> Unit,
-    onCustomerClick: (Long) -> Unit
+    onCustomerClick: (Long) -> Unit,
+    onCustomerPhotoClick: (String) -> Unit,
 ) {
+    RequestMediaPermissionsOnHome()
     val customers by viewModel.customers.collectAsState()
     val tabTotals by viewModel.tabTotals.collectAsState()
     val selectedTab by viewModel.selectedTab.collectAsState()
@@ -78,13 +81,19 @@ fun HomeScreen(
                 )
             }
         },
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = { viewModel.onAddCustomerClick() },
                 containerColor = FabBlue,
                 contentColor = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
+                Icon(Icons.Default.Add, contentDescription = "Add Customer", tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add Customer")
             }
         }
     ) { padding ->
@@ -120,6 +129,7 @@ fun HomeScreen(
                 CustomerList(
                     customers = customers,
                     onCustomerClick = { onCustomerClick(it.id) },
+                    onCustomerPhotoClick = { path -> onCustomerPhotoClick(path) },
                     onDeleteClick = { customerToDelete = it },
                     onSendMessage = { CommunicationHelper.sendCustomerMessage(it) },
                     onSendSms = { CommunicationHelper.openSmsToAdminWithCustomer(it) }
@@ -152,8 +162,8 @@ fun HomeScreen(
     if (viewModel.showAddDialog) {
         AddCustomerDialog(
             onDismiss = { viewModel.onDismissDialog() },
-            onConfirm = { name, mobile ->
-                viewModel.onAddCustomer(name, mobile)
+            onConfirm = { name, mobile, photoBytes ->
+                viewModel.onAddCustomer(name, mobile, photoBytes)
             },
             errorMessage = viewModel.errorMessage
         )
@@ -277,17 +287,24 @@ fun SearchTopBar(
 fun CustomerList(
     customers: List<Customer>,
     onCustomerClick: (Customer) -> Unit,
+    onCustomerPhotoClick: (String) -> Unit,
     onDeleteClick: (Customer) -> Unit,
     onSendMessage: (Customer) -> Unit,
     onSendSms: (Customer) -> Unit,
 ) {
     val click by rememberUpdatedState(onCustomerClick)
+    val photoClick by rememberUpdatedState(onCustomerPhotoClick)
     val delete by rememberUpdatedState(onDeleteClick)
     val sendMessage by rememberUpdatedState(onSendMessage)
     val sendSms by rememberUpdatedState(onSendSms)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 96.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (customers.isEmpty()) {
@@ -310,6 +327,9 @@ fun CustomerList(
                 CustomerCard(
                     customer = customer,
                     onClick = { click(customer) },
+                    onPhotoClick = {
+                        customer.photoPath?.let { photoClick(it) }
+                    },
                     onDelete = { delete(customer) },
                     onSendMessage = { sendMessage(customer) },
                     onSendSms = { sendSms(customer) }
@@ -324,6 +344,7 @@ fun CustomerList(
 fun CustomerCard(
     customer: Customer,
     onClick: () -> Unit,
+    onPhotoClick: () -> Unit,
     onDelete: () -> Unit,
     onSendMessage: () -> Unit,
     onSendSms: () -> Unit,
@@ -350,6 +371,13 @@ fun CustomerCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                com.haftabook.app.presentation.components.CustomerAvatar(
+                    photoPath = customer.photoPath,
+                    displayName = customer.name,
+                    modifier = Modifier,
+                    onClick = if (customer.photoPath != null) onPhotoClick else null
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = customer.name, style = MaterialTheme.typography.titleLarge)
                     Text(text = customer.mobile, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

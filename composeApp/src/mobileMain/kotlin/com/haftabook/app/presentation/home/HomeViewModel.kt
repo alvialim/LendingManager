@@ -9,6 +9,8 @@ import com.haftabook.app.domain.model.Customer
 import com.haftabook.app.domain.usecase.AddCustomerUseCase
 import com.haftabook.app.domain.usecase.DeleteCustomerUseCase
 import com.haftabook.app.domain.usecase.GetCustomersUseCase
+import com.haftabook.app.domain.usecase.UpdateCustomerPhotoUseCase
+import com.haftabook.app.platform.saveCustomerProfilePhoto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +35,7 @@ data class HomeTabTotals(
 class HomeViewModel(
     private val getCustomersUseCase: GetCustomersUseCase,
     private val addCustomerUseCase: AddCustomerUseCase,
+    private val updateCustomerPhotoUseCase: UpdateCustomerPhotoUseCase,
     private val deleteCustomerUseCase: DeleteCustomerUseCase,
     private val requestSyncNow: suspend () -> Unit = {},
 ) : ViewModel() {
@@ -152,7 +155,7 @@ class HomeViewModel(
         }
     }
 
-    fun onAddCustomer(name: String, mobile: String) {
+    fun onAddCustomer(name: String, mobile: String, photoBytes: ByteArray?) {
         val loanType = if (selectedTabFlow.value == 0) "MONTHLY" else "DAILY"
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
@@ -160,6 +163,10 @@ class HomeViewModel(
                 val result = addCustomerUseCase.execute(name, mobile, loanType)
                 if (result.isSuccess) {
                     val newId = result.getOrNull()!!
+                    if (photoBytes != null) {
+                        val path = saveCustomerProfilePhoto(newId, photoBytes)
+                        updateCustomerPhotoUseCase.execute(newId, path)
+                    }
                     pendingNewCustomerId = newId
                     val fresh = getCustomersUseCase.loadAllCustomersSnapshot()
                     customerListRaw.value = fresh

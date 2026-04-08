@@ -23,7 +23,7 @@ import com.haftabook.app.data.local.entity.SyncStateEntity
         SyncOutboxEntity::class,
         SyncStateEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @ConstructedBy(AppDatabaseConstructor::class)

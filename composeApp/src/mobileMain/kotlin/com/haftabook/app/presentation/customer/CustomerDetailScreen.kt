@@ -18,6 +18,8 @@ import com.haftabook.app.domain.model.Customer
 import com.haftabook.app.domain.model.Loan
 import com.haftabook.app.utils.NumberHelper
 import com.haftabook.app.presentation.components.CustomerProgressBar
+import com.haftabook.app.platform.rememberCustomerPhotoPicker
+import com.haftabook.app.presentation.components.CustomerAvatar
 import com.haftabook.app.presentation.components.DeleteActionButton
 import com.haftabook.app.ui.FabBlue
 import com.haftabook.app.ui.PaidAmountGreen
@@ -29,6 +31,19 @@ fun CustomerDetailScreen(
     onBack: () -> Unit
 ) {
     val customer = viewModel.customer
+    var showPhotoPicker by remember { mutableStateOf(false) }
+    var photoError by remember { mutableStateOf<String?>(null) }
+    val picker = rememberCustomerPhotoPicker(
+        onImageBytes = { bytes ->
+            photoError = null
+            showPhotoPicker = false
+            viewModel.onUpdateCustomerPhoto(bytes)
+        },
+        onError = { msg ->
+            photoError = msg
+            showPhotoPicker = false
+        }
+    )
     val loans by viewModel.loans.collectAsState(initial = emptyList())
     val expandedLoanEmis by viewModel.expandedLoanEmis
     var loanToDelete by remember { mutableStateOf<Loan?>(null) }
@@ -38,10 +53,26 @@ fun CustomerDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(customer?.name ?: "Loading...")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CustomerAvatar(
+                                photoPath = customer?.photoPath,
+                                displayName = customer?.name,
+                                modifier = Modifier,
+                                onClick = { showPhotoPicker = true }
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(customer?.name ?: "Loading...")
+                                Text(
+                                    text = customer?.mobile ?: "",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                         Text(
-                            text = customer?.mobile ?: "",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = photoError ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 },
@@ -52,13 +83,20 @@ fun CustomerDetailScreen(
                 }
             )
         },
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = { viewModel.onAddLoanClick() },
-                containerColor = FabBlue,
+                containerColor = Color(0xFF16A34A),
                 contentColor = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Loan", tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add Loan")
             }
         }
     ) { padding ->
@@ -67,7 +105,12 @@ fun CustomerDetailScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 16.dp,
+                end = 16.dp,
+                bottom = 96.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -185,6 +228,20 @@ fun CustomerDetailScreen(
                 ) {
                     CircularProgressIndicator()
                 }
+            }
+        )
+    }
+
+    if (showPhotoPicker) {
+        AlertDialog(
+            onDismissRequest = { showPhotoPicker = false },
+            title = { Text("Update photo") },
+            text = { Text("Choose a new profile photo") },
+            confirmButton = {
+                TextButton(onClick = { picker.pickFromGallery() }) { Text("Gallery") }
+            },
+            dismissButton = {
+                TextButton(onClick = { picker.captureFromCamera() }) { Text("Camera") }
             }
         )
     }

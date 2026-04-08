@@ -278,7 +278,9 @@ class FirebaseSyncEngine(
                     name = r.name,
                     mobile = r.mobile,
                     loanType = r.loanType,
-                    createdDate = r.createdDate
+                    createdDate = r.createdDate,
+                    // Local-only field; never comes from remote.
+                    photoPath = existing?.photoPath
                 )
             )
         }

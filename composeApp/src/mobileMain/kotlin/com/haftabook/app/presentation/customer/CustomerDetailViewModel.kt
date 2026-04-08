@@ -14,6 +14,8 @@ import com.haftabook.app.domain.usecase.GetCustomerDetailsUseCase
 import com.haftabook.app.domain.usecase.GetEmisUseCase
 import com.haftabook.app.domain.usecase.GetLoansUseCase
 import com.haftabook.app.domain.usecase.MarkEmiSlotPaidUseCase
+import com.haftabook.app.domain.usecase.UpdateCustomerPhotoUseCase
+import com.haftabook.app.platform.saveCustomerProfilePhoto
 import com.haftabook.app.utils.CommunicationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,6 +30,7 @@ class CustomerDetailViewModel(
     private val getEmisUseCase: GetEmisUseCase,
     private val addLoanUseCase: AddLoanUseCase,
     private val markEmiSlotPaidUseCase: MarkEmiSlotPaidUseCase,
+    private val updateCustomerPhotoUseCase: UpdateCustomerPhotoUseCase,
     private val deleteLoanUseCase: DeleteLoanUseCase
 ) : ViewModel() {
 
@@ -146,6 +149,26 @@ class CustomerDetailViewModel(
                     paidAmount,
                     emiNumber
                 )
+            } else {
+                errorMessage = result.exceptionOrNull()?.message
+            }
+            isLoading = false
+        }
+    }
+
+    fun onUpdateCustomerPhoto(photoBytes: ByteArray?) {
+        if (photoBytes == null) return
+        viewModelScope.launch {
+            isLoading = true
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val path = saveCustomerProfilePhoto(customerId, photoBytes)
+                    updateCustomerPhotoUseCase.execute(customerId, path).getOrThrow()
+                }
+            }
+            if (result.isSuccess) {
+                errorMessage = null
+                loadCustomer()
             } else {
                 errorMessage = result.exceptionOrNull()?.message
             }

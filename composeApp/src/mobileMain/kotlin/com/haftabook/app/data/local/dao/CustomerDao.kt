@@ -54,6 +54,9 @@ interface CustomerDao {
     @Query("SELECT * FROM customers WHERE remote_id = :remoteId LIMIT 1")
     suspend fun getCustomerByRemoteId(remoteId: String): CustomerEntity?
 
+    @Query("UPDATE customers SET photoPath = :photoPath, updated_at = :updatedAt WHERE id = :customerId")
+    suspend fun updateCustomerPhotoPath(customerId: Long, photoPath: String?, updatedAt: Long)
+
     @Delete
     suspend fun deleteCustomer(customer: CustomerEntity)
 

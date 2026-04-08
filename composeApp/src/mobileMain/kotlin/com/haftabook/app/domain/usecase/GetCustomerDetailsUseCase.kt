@@ -49,6 +49,7 @@ class GetCustomerDetailsUseCase(
             name = customerEntity.name,
             mobile = customerEntity.mobile,
             loanType = customerEntity.loanType,
+            photoPath = customerEntity.photoPath,
             totalGiven = totalGiven,
             totalPaid = totalPaid,
             totalDue = totalDue,

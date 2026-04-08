@@ -15,6 +15,7 @@ data class Customer(
     val name: String,
     val mobile: String,
     val loanType: String,
+    val photoPath: String? = null,
 
     // Calculated fields (from loans)
     val totalGiven: Long = 0,      // Sum of all loan amounts
