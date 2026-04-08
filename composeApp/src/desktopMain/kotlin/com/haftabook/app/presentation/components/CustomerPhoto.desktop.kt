@@ -29,12 +29,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.haftabook.app.platform.readLocalPhotoBytes
 import org.jetbrains.skia.Image as SkiaImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.ui.unit.sp
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -61,7 +63,12 @@ actual fun CustomerAvatar(
         .border(BorderStroke(1.dp, Color.Gray), CircleShape)
     val clickable = if (onClick != null) base.clickable(onClick = onClick) else base
     if (bitmap != null) {
-        Image(bitmap = bitmap, contentDescription = "Customer photo", modifier = clickable)
+        Image(
+            bitmap = bitmap,
+            contentDescription = "Customer photo",
+            modifier = clickable,
+            contentScale = ContentScale.Crop,
+        )
     } else {
         val bg = placeholderColor(displayName)
         val initial = placeholderInitial(displayName)
@@ -72,6 +79,8 @@ actual fun CustomerAvatar(
             Text(
                 text = initial,
                 color = Color.White,
+                fontSize = 18.sp,
+
                 fontWeight = FontWeight.SemiBold,
             )
         }
@@ -92,7 +101,12 @@ actual fun CustomerAvatarBytes(
         .border(BorderStroke(1.dp, Color.Gray), CircleShape)
     val clickable = if (onClick != null) base.clickable(onClick = onClick) else base
     if (bitmap != null) {
-        Image(bitmap = bitmap, contentDescription = "Customer photo", modifier = clickable)
+        Image(
+            bitmap = bitmap,
+            contentDescription = "Customer photo",
+            modifier = clickable,
+            contentScale = ContentScale.Crop,
+        )
     } else {
         val bg = placeholderColor(displayName)
         val initial = placeholderInitial(displayName)
@@ -103,6 +117,8 @@ actual fun CustomerAvatarBytes(
             Text(
                 text = initial,
                 color = Color.White,
+                fontSize = 18.sp,
+
                 fontWeight = FontWeight.SemiBold,
             )
         }

@@ -106,13 +106,35 @@ fun HomeScreen(
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
+                    modifier = if(selectedTab==0) Modifier.background(Color(0xFFDAE5FF)) else Modifier.background(Color.Transparent) ,
                     onClick = { viewModel.onTabChanged(0) },
-                    text = { Text("Monthly") }
+                    text = {
+                        Text(
+                            "Monthly",
+                            color = if (selectedTab == 0) {
+                                Color(0xFF2563EB)
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+
+                        )
+                    }
                 )
                 Tab(
                     selected = selectedTab == 1,
+                    modifier = if(selectedTab==1) Modifier.background(Color(0xFFD8E4FF)) else Modifier.background(Color.Transparent) ,
+
                     onClick = { viewModel.onTabChanged(1) },
-                    text = { Text("Daily") }
+                    text = {
+                        Text(
+                            "Daily",
+                            color = if (selectedTab == 1) {
+                                Color(0xFF2563EB)
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            )
+                    }
                 )
             }
 

@@ -77,7 +77,7 @@ fun AddCustomerDialog(
                     CustomerAvatarBytes(
                         photoBytes = photoBytes,
                         displayName = name,
-                        modifier = Modifier.size(60.dp),
+                        modifier = Modifier.size(120.dp),
                         onClick = { showPhotoPicker = true }
                     )
                 }

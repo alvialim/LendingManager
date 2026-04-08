@@ -9,14 +9,14 @@ internal fun placeholderInitial(displayName: String?): String {
 
 internal fun placeholderColor(displayName: String?): Color {
     val palette = listOf(
-        Color(0xFF60A5FA), // blue
-        Color(0xFF34D399), // green
-        Color(0xFFFBBF24), // amber
-        Color(0xFFF87171), // red
-        Color(0xFFA78BFA), // purple
-        Color(0xFF22D3EE), // cyan
-        Color(0xFFFB7185), // rose
-        Color(0xFF4ADE80), // emerald
+        Color(0xFF002174), // blue
+        Color(0xFF007F51), // green
+        Color(0xFF6F5200), // amber
+        Color(0xFF7F0000), // red
+        Color(0xFF350071), // purple
+        Color(0xFF005F6C), // cyan
+        Color(0xFF6F0014), // rose
+        Color(0xFF006A25), // emerald
     )
     val key = displayName?.trim().orEmpty()
     val idx = (key.hashCode().absoluteValue) % palette.size
