@@ -16,6 +16,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -51,7 +52,7 @@ actual fun CustomerAvatar(
     modifier: Modifier,
     onClick: (() -> Unit)?,
 ) {
-    val bitmap by produceState(initialValue = null, key1 = photoPath) {
+    val bitmap: ImageBitmap? by produceState<ImageBitmap?>(initialValue = null, key1 = photoPath) {
         value = if (photoPath.isNullOrBlank()) null else withContext(Dispatchers.IO) {
             val bytes = readLocalPhotoBytes(photoPath)
             bytes?.let(::decodeSkia)
@@ -62,14 +63,14 @@ actual fun CustomerAvatar(
         .clip(CircleShape)
         .border(BorderStroke(1.dp, Color.Gray), CircleShape)
     val clickable = if (onClick != null) base.clickable(onClick = onClick) else base
-    if (bitmap != null) {
+    bitmap?.let { img ->
         Image(
-            bitmap = bitmap,
+            bitmap = img,
             contentDescription = "Customer photo",
             modifier = clickable,
             contentScale = ContentScale.Crop,
         )
-    } else {
+    } ?: run {
         val bg = placeholderColor(displayName)
         val initial = placeholderInitial(displayName)
         Box(
@@ -140,6 +141,7 @@ actual fun CustomerPhotoZoomScreen(photoPath: String, onBack: () -> Unit) {
         offsetY += panChange.y
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(
