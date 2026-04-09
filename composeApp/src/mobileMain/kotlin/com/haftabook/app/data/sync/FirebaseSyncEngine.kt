@@ -19,10 +19,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 
 /**
@@ -68,9 +72,28 @@ class FirebaseSyncEngine(
     private val loansState = MutableStateFlow<Map<String, LoanRemote>>(emptyMap())
     private val emisState = MutableStateFlow<Map<String, EmiRemote>>(emptyMap())
 
+    private val flushMutex = Mutex()
+
     fun start(scope: CoroutineScope) {
         networkMonitor.start()
         scope.launch { observeRemoteChanges() }
+
+        // Instant sync: when we become online AND there is pending outbox work, flush immediately.
+        scope.launch {
+            combine(
+                networkMonitor.isOnline,
+                db.syncOutboxDao().observePendingCount()
+            ) { online, pending -> online to pending }
+                .map { (online, pending) -> online && pending > 0 }
+                .distinctUntilChanged()
+                .collectLatest { shouldFlush ->
+                    if (!shouldFlush) return@collectLatest
+                    flushMutex.withLock {
+                        flushPendingSyncToCloud()
+                    }
+                }
+        }
+
         scope.launch {
             networkMonitor.isOnline.collectLatest { online ->
                 if (!online) return@collectLatest
@@ -179,6 +202,7 @@ class FirebaseSyncEngine(
                 val msg = result.exceptionOrNull()?.message ?: result.toString()
                 val safe = msg.take(400)
                 db.syncOutboxDao().markFailure(row.id, safe)
+                SyncDiagnostics.noteError("Cloud write failed: $safe")
                 log("Cloud write FAILED (RTDB and/or Firestore) entity=${row.entityType} outboxId=${row.id}: $safe")
             }
         }

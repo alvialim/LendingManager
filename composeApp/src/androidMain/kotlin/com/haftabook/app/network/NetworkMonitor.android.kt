@@ -40,6 +40,7 @@ actual class NetworkMonitor {
     private fun hasInternet(cm: ConnectivityManager): Boolean {
         val n = cm.activeNetwork ?: return false
         val caps = cm.getNetworkCapabilities(n) ?: return false
+        // VALIDATED can be false temporarily (or on some networks) even when Firebase works.
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
