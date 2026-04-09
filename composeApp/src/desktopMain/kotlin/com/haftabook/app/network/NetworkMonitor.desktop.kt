@@ -8,6 +8,9 @@ import java.net.InetAddress
 /**
  * Lightweight connectivity hint for desktop: no platform callback API like Android;
  * treats unknown as online so local DB and sync retries still run.
+ *
+ * NOTE: ICMP reachability checks often fail on Windows due to firewall rules.
+ * We only flip to `true` when we can resolve/reach a host; we do not flip to `false`.
  */
 actual class NetworkMonitor {
 
@@ -19,7 +22,7 @@ actual class NetworkMonitor {
             runCatching {
                 InetAddress.getByName("firebase.google.com").isReachable(3_000)
             }.onSuccess { reachable ->
-                _isOnline.value = reachable
+                if (reachable) _isOnline.value = true
             }
         }.start()
     }

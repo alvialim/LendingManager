@@ -33,6 +33,7 @@ import com.haftabook.app.presentation.theme.lightActionButtonBackground
 import com.haftabook.app.ui.FabBlue
 import com.haftabook.app.ui.PaidAmountGreen
 import com.haftabook.app.platform.RequestMediaPermissionsOnHome
+import com.haftabook.app.data.sync.SyncDiagnostics
 import com.haftabook.app.utils.CommunicationHelper
 import com.haftabook.app.utils.NumberHelper
 
@@ -46,6 +47,7 @@ fun HomeScreen(
 ) {
     RequestMediaPermissionsOnHome()
     val customers by viewModel.customers.collectAsState()
+    val syncError by SyncDiagnostics.lastError.collectAsState()
     val tabTotals by viewModel.tabTotals.collectAsState()
     val selectedTab by viewModel.selectedTab.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -103,6 +105,22 @@ fun HomeScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
+            if (!syncError.isNullOrBlank()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Text(
+                        text = syncError!!,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp),
+                        maxLines = 3,
+                    )
+                }
+            }
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,

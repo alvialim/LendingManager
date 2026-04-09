@@ -5,6 +5,9 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.FirebasePlatform
 import com.haftabook.app.data.sync.HAFTABOOK_REALTIME_DATABASE_URL
+import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 
 /**
  * GitLive on JVM uses firebase-java-sdk: [FirebasePlatform] then [FirebaseApp.initializeApp]
@@ -59,5 +62,21 @@ internal fun ensureDesktopFirebaseInitialized() {
         // Keep running, but make failure visible in packaged desktop apps.
         println("[Haftabook][Firebase] Desktop init failed: ${e.message}")
         e.printStackTrace()
+        runCatching {
+            val dir = File(System.getProperty("user.home"), ".star-group")
+            dir.mkdirs()
+            val out = File(dir, "desktop-firebase-init-error.txt")
+            val sw = StringWriter()
+            e.printStackTrace(PrintWriter(sw))
+            out.writeText(
+                buildString {
+                    appendLine("Desktop Firebase init failed")
+                    appendLine("message=${e.message}")
+                    appendLine("dbUrl=$HAFTABOOK_REALTIME_DATABASE_URL")
+                    appendLine()
+                    append(sw.toString())
+                }
+            )
+        }
     }
 }

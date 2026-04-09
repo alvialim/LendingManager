@@ -187,6 +187,7 @@ class FirebaseSyncEngine(
 
     private fun log(message: String) {
         println("[HaftaBookSync] $message")
+        SyncDiagnostics.noteLog(message)
     }
 
     /**
@@ -195,6 +196,7 @@ class FirebaseSyncEngine(
      */
     private fun retryingValueEvents(flow: Flow<DataSnapshot>) = flow.retry { cause ->
         if (cause is CancellationException) return@retry false
+        SyncDiagnostics.noteError("RTDB listener error: ${cause.message ?: cause::class.simpleName}")
         delay(RETRY_MS)
         true
     }
