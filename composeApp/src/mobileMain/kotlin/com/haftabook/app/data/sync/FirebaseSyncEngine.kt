@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -49,16 +48,14 @@ class FirebaseSyncEngine(
     private val firebaseDatabaseUrl: String = HAFTABOOK_REALTIME_DATABASE_URL,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) {
-    // Persistence must be enabled before any [reference] call (GitLive / Android RTDB).
-    private val firebaseDatabase = run {
-        val db = Firebase.database(firebaseDatabaseUrl)
-        runCatching { db.setPersistenceEnabled(true) }
-            .onFailure { log("setPersistenceEnabled: ${it.message}") }
-        db
-    }
-    private val customersRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_CUSTOMERS)
-    private val loansRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_LOANS)
-    private val emisRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_EMIS)
+    private val rtdbInitMutex = Mutex()
+
+    // NOTE: On some desktop packaged builds, RTDB listeners can throw executor rejection errors.
+    // We keep refs mutable so we can re-initialize RTDB and resubscribe.
+    private var firebaseDatabase = createDatabase()
+    private var customersRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_CUSTOMERS)
+    private var loansRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_LOANS)
+    private var emisRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_EMIS)
 
     private val firestore = Firebase.firestore
 
@@ -73,6 +70,22 @@ class FirebaseSyncEngine(
     private val emisState = MutableStateFlow<Map<String, EmiRemote>>(emptyMap())
 
     private val flushMutex = Mutex()
+
+    private fun createDatabase() = Firebase.database(firebaseDatabaseUrl).also { d ->
+        // Persistence must be enabled before any [reference] call (GitLive / Android RTDB).
+        runCatching { d.setPersistenceEnabled(true) }
+            .onFailure { log("setPersistenceEnabled: ${it.message}") }
+    }
+
+    private suspend fun reinitializeRtdb(reason: Throwable) {
+        rtdbInitMutex.withLock {
+            SyncDiagnostics.noteError("RTDB reinit after error: ${reason.message ?: reason::class.simpleName}")
+            firebaseDatabase = createDatabase()
+            customersRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_CUSTOMERS)
+            loansRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_LOANS)
+            emisRef = firebaseDatabase.reference(FIRESTORE_COLLECTION_EMIS)
+        }
+    }
 
     fun start(scope: CoroutineScope) {
         networkMonitor.start()
@@ -214,31 +227,47 @@ class FirebaseSyncEngine(
         SyncDiagnostics.noteLog(message)
     }
 
-    /**
-     * Retries after permission/network errors so RTDB [valueEvents] does not crash the process.
-     * You must still allow read/write in Firebase Console → Realtime Database → Rules (see database.rules.json).
-     */
-    private fun retryingValueEvents(flow: Flow<DataSnapshot>) = flow.retry { cause ->
-        if (cause is CancellationException) return@retry false
-        SyncDiagnostics.noteError("RTDB listener error: ${cause.message ?: cause::class.simpleName}")
-        delay(RETRY_MS)
-        true
-    }
-
     private suspend fun observeRemoteChanges() = supervisorScope {
         launch {
-            retryingValueEvents(customersRef.valueEvents).collectLatest { snapshot ->
-                customersState.value = snapshot.value<Map<String, CustomerRemote>?>() ?: emptyMap()
+            while (isActive) {
+                try {
+                    customersRef.valueEvents.collectLatest { snapshot ->
+                        customersState.value = snapshot.value<Map<String, CustomerRemote>?>() ?: emptyMap()
+                    }
+                } catch (e: Throwable) {
+                    if (e is CancellationException) throw e
+                    SyncDiagnostics.noteError("RTDB customers listener error: ${e.message ?: e::class.simpleName}")
+                    reinitializeRtdb(e)
+                    delay(RETRY_MS)
+                }
             }
         }
         launch {
-            retryingValueEvents(loansRef.valueEvents).collectLatest { snapshot ->
-                loansState.value = snapshot.value<Map<String, LoanRemote>?>() ?: emptyMap()
+            while (isActive) {
+                try {
+                    loansRef.valueEvents.collectLatest { snapshot ->
+                        loansState.value = snapshot.value<Map<String, LoanRemote>?>() ?: emptyMap()
+                    }
+                } catch (e: Throwable) {
+                    if (e is CancellationException) throw e
+                    SyncDiagnostics.noteError("RTDB loans listener error: ${e.message ?: e::class.simpleName}")
+                    reinitializeRtdb(e)
+                    delay(RETRY_MS)
+                }
             }
         }
         launch {
-            retryingValueEvents(emisRef.valueEvents).collectLatest { snapshot ->
-                emisState.value = snapshot.value<Map<String, EmiRemote>?>() ?: emptyMap()
+            while (isActive) {
+                try {
+                    emisRef.valueEvents.collectLatest { snapshot ->
+                        emisState.value = snapshot.value<Map<String, EmiRemote>?>() ?: emptyMap()
+                    }
+                } catch (e: Throwable) {
+                    if (e is CancellationException) throw e
+                    SyncDiagnostics.noteError("RTDB emis listener error: ${e.message ?: e::class.simpleName}")
+                    reinitializeRtdb(e)
+                    delay(RETRY_MS)
+                }
             }
         }
         launch {
