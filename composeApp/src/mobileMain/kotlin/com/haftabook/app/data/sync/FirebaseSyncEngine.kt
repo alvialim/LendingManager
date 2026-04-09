@@ -14,11 +14,12 @@ import dev.gitlive.firebase.database.DataSnapshot
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
@@ -26,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 /**
@@ -72,9 +74,22 @@ class FirebaseSyncEngine(
     private val flushMutex = Mutex()
 
     private fun createDatabase() = Firebase.database(firebaseDatabaseUrl).also { d ->
-        // Persistence must be enabled before any [reference] call (GitLive / Android RTDB).
-        runCatching { d.setPersistenceEnabled(true) }
-            .onFailure { log("setPersistenceEnabled: ${it.message}") }
+        // Disk persistence on desktop JVM (Windows/macOS/Linux) can cause heavy I/O and UI jank.
+        // Android ART keeps local RTDB cache; desktop JVM skips unless explicitly an Android runtime.
+        if (isAndroidRuntime()) {
+            runCatching { d.setPersistenceEnabled(true) }
+                .onFailure { log("setPersistenceEnabled: ${it.message}") }
+        } else {
+            log("RTDB disk persistence disabled (desktop JVM — reduces lag)")
+        }
+    }
+
+    private fun isAndroidRuntime(): Boolean {
+        val rn = System.getProperty("java.runtime.name", "")
+        val vm = System.getProperty("java.vm.name", "")
+        return rn.contains("Android", ignoreCase = true) ||
+            vm.contains("Dalvik", ignoreCase = true) ||
+            vm.contains("ART", ignoreCase = true)
     }
 
     private suspend fun reinitializeRtdb(reason: Throwable) {
@@ -278,16 +293,20 @@ class FirebaseSyncEngine(
             ) { c: Map<String, CustomerRemote>, l: Map<String, LoanRemote>, e: Map<String, EmiRemote> ->
                 Triple(c, l, e)
             }
+                .debounce(MERGE_DEBOUNCE_MS)
                 .collectLatest { (c, l, e) ->
-                    val pendingDeletes = loadPendingDeleteRemoteIds()
-                    c.values.forEach { remote ->
-                        if (remote.id !in pendingDeletes.customers) mergeCustomer(remote)
-                    }
-                    l.values.forEach { remote ->
-                        if (remote.id !in pendingDeletes.loans) mergeLoan(remote)
-                    }
-                    e.values.forEach { remote ->
-                        if (remote.id !in pendingDeletes.emis) mergeEmi(remote)
+                    // Merge on Default; avoids competing with Compose/UI on desktop JVM.
+                    withContext(Dispatchers.Default) {
+                        val pendingDeletes = loadPendingDeleteRemoteIds()
+                        c.values.forEach { remote ->
+                            if (remote.id !in pendingDeletes.customers) mergeCustomer(remote)
+                        }
+                        l.values.forEach { remote ->
+                            if (remote.id !in pendingDeletes.loans) mergeLoan(remote)
+                        }
+                        e.values.forEach { remote ->
+                            if (remote.id !in pendingDeletes.emis) mergeEmi(remote)
+                        }
                     }
                 }
         }
@@ -317,8 +336,11 @@ class FirebaseSyncEngine(
 
     private companion object {
         private const val RETRY_MS = 10_000L
-        private const val DRAIN_AGAIN_MS = 300L
-        private const val DRAIN_IDLE_MS = 1000L
+        /** Coalesce rapid RTDB snapshot updates before merging into Room (reduces CPU spikes on Windows). */
+        private const val MERGE_DEBOUNCE_MS = 400L
+        private const val DRAIN_AGAIN_MS = 500L
+        /** Longer idle poll reduces wakeups when outbox is empty (helps desktop battery/CPU). */
+        private const val DRAIN_IDLE_MS = 5000L
     }
 
     private suspend fun mergeCustomer(r: CustomerRemote) {

@@ -95,20 +95,28 @@ actual fun CustomerAvatarBytes(
     modifier: Modifier,
     onClick: (() -> Unit)?,
 ) {
-    val bitmap = remember(photoBytes) { photoBytes?.let(::decodeSkia) }
+    val bitmap: ImageBitmap? by produceState<ImageBitmap?>(initialValue = null, key1 = photoBytes) {
+        value = if (photoBytes == null || photoBytes.isEmpty()) {
+            null
+        } else {
+            withContext(Dispatchers.IO) {
+                decodeSkia(photoBytes)
+            }
+        }
+    }
     val base = modifier
         .size(60.dp)
         .clip(CircleShape)
         .border(BorderStroke(1.dp, Color.Gray), CircleShape)
     val clickable = if (onClick != null) base.clickable(onClick = onClick) else base
-    if (bitmap != null) {
+    bitmap?.let { img ->
         Image(
-            bitmap = bitmap,
+            bitmap = img,
             contentDescription = "Customer photo",
             modifier = clickable,
             contentScale = ContentScale.Crop,
         )
-    } else {
+    } ?: run {
         val bg = placeholderColor(displayName)
         val initial = placeholderInitial(displayName)
         Box(
@@ -129,8 +137,12 @@ actual fun CustomerAvatarBytes(
 @Composable
 actual fun CustomerPhotoZoomScreen(photoPath: String, onBack: () -> Unit) {
     val lastModified = remember(photoPath) { runCatching { File(photoPath).lastModified() }.getOrNull() }
-    val bytes = remember(photoPath, lastModified) { readLocalPhotoBytes(photoPath) }
-    val bitmap = remember(bytes) { bytes?.let(::decodeSkia) }
+    val bitmap: ImageBitmap? by produceState<ImageBitmap?>(initialValue = null, key1 = photoPath, key2 = lastModified) {
+        value = withContext(Dispatchers.IO) {
+            val bytes = readLocalPhotoBytes(photoPath)
+            bytes?.let(::decodeSkia)
+        }
+    }
 
     var scale by remember { mutableStateOf(1f) }
     var offsetX by remember { mutableStateOf(0f) }
@@ -166,10 +178,9 @@ actual fun CustomerPhotoZoomScreen(photoPath: String, onBack: () -> Unit) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (bitmap != null) {
-                Image(bitmap = bitmap, contentDescription = "Customer photo")
+            bitmap?.let { img ->
+                Image(bitmap = img, contentDescription = "Customer photo")
             }
         }
     }
 }
-

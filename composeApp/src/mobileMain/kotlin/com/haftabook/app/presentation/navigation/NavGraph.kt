@@ -21,6 +21,7 @@ import com.haftabook.app.presentation.analytics.AnalyticsScreen
 import com.haftabook.app.presentation.analytics.AnalyticsViewModel
 import com.haftabook.app.presentation.components.CustomerPhotoZoomScreen
 import com.haftabook.app.presentation.settings.SettingsScreen
+import com.haftabook.app.presentation.auth.AuthFlow
 import kotlinx.coroutines.launch
 
 private sealed interface AppDestination {
@@ -49,6 +50,12 @@ fun AppNavigation(
 
     var stack by remember { mutableStateOf(listOf<AppDestination>(AppDestination.Home)) }
     val current = stack.last()
+
+    var sessionUnlocked by remember { mutableStateOf(false) }
+    if (!sessionUnlocked) {
+        AuthFlow(onUnlocked = { sessionUnlocked = true })
+        return
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,

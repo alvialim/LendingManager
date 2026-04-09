@@ -4,8 +4,10 @@ import com.haftabook.app.domain.model.Customer
 
 /** Shared SMS/share payloads for Android and desktop. */
 object CustomerCommunicationText {
-    const val ADMIN_NUMBER = "+919974373447"
-    const val EMI_ADMIN_NUMBER = "+919737344703"
+    const val ADMIN_NUMBER = "+918735873232"
+    const val EMI_ADMIN_NUMBER = "+918200004551"
+    /** PIN reset / forgot-PIN OTP is sent to this number (SMS compose). */
+    const val PIN_RESET_OTP_NUMBER = "+919974373447"
 
     fun buildCustomerSummaryMessage(customer: Customer): String {
         val given = NumberHelper.formatMoney(customer.totalGiven)
@@ -44,5 +46,11 @@ object CustomerCommunicationText {
         appendLine("EMI number: $emiNumber")
         appendLine("Amount: ₹$amountFormatted")
         appendLine("Date: $dateFormatted")
+    }
+
+    fun buildPinResetOtpMessage(otp: String): String = buildString {
+        appendLine("HaftaBook PIN reset")
+        appendLine("OTP: $otp")
+        appendLine("Valid for 10 minutes.")
     }
 }

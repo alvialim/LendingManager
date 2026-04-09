@@ -92,6 +92,7 @@ kotlin {
             dependsOn(mobileMain)
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}")
+                implementation(libs.androidx.core.ktx)
                 implementation(libs.compose.uiToolingPreview)
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.ktor.client.okhttp)

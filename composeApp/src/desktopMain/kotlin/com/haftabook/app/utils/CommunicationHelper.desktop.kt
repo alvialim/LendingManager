@@ -136,4 +136,18 @@ actual object CommunicationHelper {
             )
         }
     }
+
+    actual fun sendForgotPinOtp(otp: String) {
+        val message = CustomerCommunicationText.buildPinResetOtpMessage(otp)
+        val admin = CustomerCommunicationText.PIN_RESET_OTP_NUMBER
+        if (!openSmsCompose(admin, message)) {
+            copyToClipboard(
+                buildString {
+                    appendLine("SMS to $admin")
+                    appendLine()
+                    append(message)
+                }
+            )
+        }
+    }
 }

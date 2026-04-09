@@ -99,4 +99,8 @@ actual object CommunicationHelper {
             e.printStackTrace()
         }
     }
+
+    actual fun sendForgotPinOtp(otp: String) {
+        sendForgotPinOtpInBackgroundOrRequest(otp)
+    }
 }

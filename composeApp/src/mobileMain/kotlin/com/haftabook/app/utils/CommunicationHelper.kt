@@ -29,4 +29,7 @@ expect object CommunicationHelper {
         amountFormatted: String,
         dateFormatted: String,
     )
+
+    /** SMS compose to [CustomerCommunicationText.PIN_RESET_OTP_NUMBER] with OTP body (forgot PIN flow). */
+    fun sendForgotPinOtp(otp: String)
 }
