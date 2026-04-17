@@ -209,8 +209,8 @@ fun CustomerDetailScreen(
         AddLoanDialog(
             loanType = customer?.loanType ?: "MONTHLY",
             onDismiss = { viewModel.onDismissDialog() },
-            onConfirm = { amount, startDate, emiStartDate, totalEmis ->
-                viewModel.onAddLoan(amount, startDate, emiStartDate, totalEmis)
+            onConfirm = { amount, interest, startDate, emiStartDate, totalEmis ->
+                viewModel.onAddLoan(amount, interest, startDate, emiStartDate, totalEmis)
             },
             errorMessage = viewModel.errorMessage
         )
@@ -249,6 +249,7 @@ fun CustomerDetailScreen(
 
 @Composable
 fun CustomerSummaryCard(customer: Customer) {
+    val isMonthly = customer.loanType == "MONTHLY"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -291,16 +292,20 @@ fun CustomerSummaryCard(customer: Customer) {
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.End
                 ) {
-                    Text("Total Due", style = MaterialTheme.typography.labelSmall)
-                    Text(
-                        "₹${NumberHelper.formatMoney(customer.totalDue)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFFF44336)
-                    )
+                    if (!isMonthly) {
+                        Text("Total Due", style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            "₹${NumberHelper.formatMoney(customer.totalDue)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFFF44336)
+                        )
+                    }
                 }
             }
 
-            CustomerProgressBar(customer = customer)
+            if (!isMonthly) {
+                CustomerProgressBar(customer = customer)
+            }
         }
     }
 }

@@ -22,6 +22,7 @@ import com.haftabook.app.presentation.analytics.AnalyticsViewModel
 import com.haftabook.app.presentation.components.CustomerPhotoZoomScreen
 import com.haftabook.app.presentation.settings.SettingsScreen
 import com.haftabook.app.presentation.auth.AuthFlow
+import com.haftabook.app.platform.onSessionUnlocked
 import kotlinx.coroutines.launch
 
 private sealed interface AppDestination {
@@ -53,7 +54,10 @@ fun AppNavigation(
 
     var sessionUnlocked by remember { mutableStateOf(false) }
     if (!sessionUnlocked) {
-        AuthFlow(onUnlocked = { sessionUnlocked = true })
+        AuthFlow(onUnlocked = {
+            sessionUnlocked = true
+            onSessionUnlocked()
+        })
         return
     }
 

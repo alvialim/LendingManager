@@ -16,6 +16,7 @@ class AddLoanUseCase(
         customerId: Long,
         loanType: String,
         amount: Long,
+        interest: Long?,
         loanStartDate: Long,
         emiStartDate: Long,
         totalEmis: Int
@@ -27,14 +28,24 @@ class AddLoanUseCase(
             return Result.failure(Exception("First EMI date cannot be before loan start date"))
         }
 
+        val isMonthly = loanType == "MONTHLY"
+        val normalizedTotalEmis = if (isMonthly) 12 else totalEmis
+        if (isMonthly && (interest == null || interest <= 0L)) {
+            return Result.failure(Exception("Interest must be > 0"))
+        }
+
         // Calculate EMI Amount (Business Logic)
-        // Using ceiling to ensure the total amount is covered
-        val emiAmount = ceil(amount.toDouble() / totalEmis).toLong()
+        val emiAmount = if (isMonthly) {
+            interest!!
+        } else {
+            // Using ceiling to ensure the total amount is covered
+            ceil(amount.toDouble() / normalizedTotalEmis).toLong()
+        }
 
         // Calculate last EMI date
         val lastEmiDate = when (loanType) {
-            "DAILY" -> DateHelper.addDays(emiStartDate, totalEmis - 1)
-            "MONTHLY" -> DateHelper.addMonths(emiStartDate, totalEmis - 1)
+            "DAILY" -> DateHelper.addDays(emiStartDate, normalizedTotalEmis - 1)
+            "MONTHLY" -> DateHelper.addMonths(emiStartDate, normalizedTotalEmis - 1)
             else -> emiStartDate
         }
 
@@ -47,9 +58,9 @@ class AddLoanUseCase(
             emiAmount = emiAmount,       // Saved EMI amount
             loanStartDate = loanStartDate,
             emiStartDate = emiStartDate,
-            totalEmis = totalEmis,
+            totalEmis = normalizedTotalEmis,
             lastEmiDate = lastEmiDate,
-            remainingAmount = amount
+            remainingAmount = if (isMonthly) 0L else amount
         )
 
         val loanId = loanRepository.addLoan(loan)

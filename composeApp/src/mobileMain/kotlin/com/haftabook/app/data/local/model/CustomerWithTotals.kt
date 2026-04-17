@@ -11,6 +11,7 @@ data class CustomerWithTotals(
     @Embedded
     val customer: CustomerEntity,
     val totalGiven: Long?,
+    val totalPaid: Long?,
     val totalDue: Long?,
     val totalLoans: Int
 )

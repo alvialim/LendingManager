@@ -42,15 +42,20 @@ class GetCustomersUseCase(
     private fun mapRowToCustomer(result: CustomerWithTotals): Customer {
         val entity = result.customer
         val totalGiven = result.totalGiven ?: 0L
-        val totalDue = result.totalDue ?: 0L
+        val rawTotalDue = result.totalDue ?: 0L
+        val totalPaidFromEmis = result.totalPaid ?: 0L
+        val isMonthly = entity.loanType == "MONTHLY"
+        val totalDue = if (isMonthly) 0L else rawTotalDue
+        val totalPaid = if (isMonthly) totalPaidFromEmis else (totalGiven - totalDue)
         return Customer(
             id = entity.id,
             name = entity.name,
             mobile = entity.mobile,
             loanType = entity.loanType,
+            createdDate = entity.createdDate,
             photoPath = entity.photoPath,
             totalGiven = totalGiven,
-            totalPaid = totalGiven - totalDue,
+            totalPaid = totalPaid,
             totalDue = totalDue,
             totalLoans = result.totalLoans
         )

@@ -62,6 +62,7 @@ fun HomeScreen(
                     query = searchQuery,
                     onQueryChange = { viewModel.onSearchQueryChange(it) },
                     onOpenDrawer = onOpenDrawer,
+                    showDue = selectedTab != 0,
                     onCloseClick = {
                         isSearchActive = false
                         viewModel.onSearchQueryChange("")
@@ -69,7 +70,7 @@ fun HomeScreen(
                 )
             } else {
                 TopAppBar(
-                    title = { HomeToolbarTotalsRow(totals = tabTotals) },
+                    title = { HomeToolbarTotalsRow(totals = tabTotals, showDue = selectedTab != 0) },
                     navigationIcon = {
                         IconButton(onClick = onOpenDrawer) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -229,6 +230,7 @@ fun HomeScreen(
 @Composable
 fun HomeToolbarTotalsRow(
     totals: HomeTabTotals,
+    showDue: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -246,11 +248,13 @@ fun HomeToolbarTotalsRow(
             amount = totals.totalPaid,
             amountColor = PaidAmountGreen
         )
-        ToolbarTotalColumn(
-            label = "Due",
-            amount = totals.totalDue,
-            amountColor = Color(0xFFF44336)
-        )
+        if (showDue) {
+            ToolbarTotalColumn(
+                label = "Due",
+                amount = totals.totalDue,
+                amountColor = Color(0xFFF44336)
+            )
+        }
     }
 }
 
@@ -284,6 +288,7 @@ fun SearchTopBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onOpenDrawer: () -> Unit,
+    showDue: Boolean,
     onCloseClick: () -> Unit
 ) {
     TopAppBar(
@@ -304,6 +309,7 @@ fun SearchTopBar(
                 )
                 HomeToolbarTotalsRow(
                     totals = totals,
+                    showDue = showDue,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 4.dp)
@@ -392,6 +398,7 @@ fun CustomerCard(
     val givenStr = remember(customer.totalGiven) { NumberHelper.formatMoney(customer.totalGiven) }
     val paidStr = remember(customer.totalPaid) { NumberHelper.formatMoney(customer.totalPaid) }
     val dueStr = remember(customer.totalDue) { NumberHelper.formatMoney(customer.totalDue) }
+    val isMonthly = customer.loanType == "MONTHLY"
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -444,9 +451,10 @@ fun CustomerCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Column {
-                CustomerProgressBar(customer = customer)
-
-                Spacer(modifier = Modifier.height(12.dp))
+                if (!isMonthly) {
+                    CustomerProgressBar(customer = customer)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
@@ -457,9 +465,11 @@ fun CustomerCard(
                         Text("Paid", style = MaterialTheme.typography.labelSmall)
                         Text("₹$paidStr", style = MaterialTheme.typography.bodyLarge, color = PaidAmountGreen)
                     }
-                    Column {
-                        Text("Due", style = MaterialTheme.typography.labelSmall)
-                        Text("₹$dueStr", style = MaterialTheme.typography.bodyLarge, color = Color(0xFFF44336))
+                    if (!isMonthly) {
+                        Column {
+                            Text("Due", style = MaterialTheme.typography.labelSmall)
+                            Text("₹$dueStr", style = MaterialTheme.typography.bodyLarge, color = Color(0xFFF44336))
+                        }
                     }
                 }
             }

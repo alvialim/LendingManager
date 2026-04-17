@@ -32,6 +32,7 @@ class GetCustomerDetailsUseCase(
             ?: return@withContext null
 
         val loans = loanRepository.getLoansForCustomer(customerId).first()
+        val isMonthly = customerEntity.loanType == "MONTHLY"
 
         var totalGiven = 0L
         var totalPaid = 0L
@@ -39,9 +40,11 @@ class GetCustomerDetailsUseCase(
 
         loans.forEach { loan ->
             totalGiven += loan.loanAmount
-            totalDue += loan.remainingAmount
             val paidForLoan = emiRepository.getTotalPaid(loan.id)
             totalPaid += paidForLoan
+            if (!isMonthly) {
+                totalDue += loan.remainingAmount
+            }
         }
 
         Customer(
@@ -49,10 +52,11 @@ class GetCustomerDetailsUseCase(
             name = customerEntity.name,
             mobile = customerEntity.mobile,
             loanType = customerEntity.loanType,
+            createdDate = customerEntity.createdDate,
             photoPath = customerEntity.photoPath,
             totalGiven = totalGiven,
             totalPaid = totalPaid,
-            totalDue = totalDue,
+            totalDue = if (isMonthly) 0L else totalDue,
             totalLoans = loans.size
         )
     }

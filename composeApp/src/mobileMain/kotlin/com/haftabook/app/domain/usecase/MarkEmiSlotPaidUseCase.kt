@@ -28,10 +28,13 @@ class MarkEmiSlotPaidUseCase(
             return Result.failure(Exception("This EMI is already marked paid"))
         }
 
-        val payAmount = min(loan.emiAmount, loan.remainingAmount)
-        if (payAmount <= 0L) {
-            return Result.failure(Exception("Nothing left to pay on this loan"))
+        val isMonthly = loanType == "MONTHLY"
+        val payAmount = if (isMonthly) {
+            loan.emiAmount
+        } else {
+            min(loan.emiAmount, loan.remainingAmount)
         }
+        if (payAmount <= 0L) return Result.failure(Exception("Nothing left to pay on this loan"))
 
         val dueDateForSlot =
             DateHelper.scheduledEmiDate(loan.emiStartDate, emiNumber, loanType)
@@ -45,8 +48,10 @@ class MarkEmiSlotPaidUseCase(
         )
 
         emiRepository.addEmi(emi)
-        val newRemaining = loan.remainingAmount - payAmount
-        loanRepository.updateRemaining(loanId, newRemaining)
+        if (!isMonthly) {
+            val newRemaining = loan.remainingAmount - payAmount
+            loanRepository.updateRemaining(loanId, newRemaining)
+        }
 
         return Result.success(payAmount)
     }

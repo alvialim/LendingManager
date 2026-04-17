@@ -98,6 +98,7 @@ class CustomerDetailViewModel(
 
     fun onAddLoan(
         amount: Long,
+        interest: Long?,
         loanStartDate: Long,
         emiStartDate: Long,
         totalEmis: Int
@@ -109,6 +110,7 @@ class CustomerDetailViewModel(
                     customerId = customerId,
                     loanType = customer?.loanType ?: "MONTHLY",
                     amount = amount,
+                    interest = interest,
                     loanStartDate = loanStartDate,
                     emiStartDate = emiStartDate,
                     totalEmis = totalEmis

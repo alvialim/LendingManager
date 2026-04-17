@@ -13,11 +13,13 @@ object CustomerCommunicationText {
         val given = NumberHelper.formatMoney(customer.totalGiven)
         val paid = NumberHelper.formatMoney(customer.totalPaid)
         val due = NumberHelper.formatMoney(customer.totalDue)
+        val created = DateHelper.formatDate(customer.createdDate)
         return buildString {
             appendLine("Customer details")
             appendLine("Name: ${customer.name}")
             appendLine("Mobile: ${customer.mobile}")
             appendLine("Loan type: ${customer.loanType}")
+            appendLine("Created: $created")
             appendLine("Total loans: ${customer.totalLoans}")
             appendLine("Total given: ₹$given")
             appendLine("Total paid: ₹$paid")

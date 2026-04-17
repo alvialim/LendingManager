@@ -26,6 +26,11 @@ interface CustomerDao {
         SELECT
             c.*,
             (SELECT COALESCE(SUM(loanAmount), 0) FROM loans WHERE customerId = c.id) AS totalGiven,
+            (SELECT COALESCE(SUM(e.emiAmount), 0)
+                FROM emis e
+                JOIN loans l ON l.id = e.loanId
+                WHERE l.customerId = c.id
+            ) AS totalPaid,
             (SELECT COALESCE(SUM(remainingAmount), 0) FROM loans WHERE customerId = c.id) AS totalDue,
             (SELECT COUNT(*) FROM loans WHERE customerId = c.id) AS totalLoans
         FROM customers c
@@ -40,6 +45,11 @@ interface CustomerDao {
         SELECT
             c.*,
             (SELECT COALESCE(SUM(loanAmount), 0) FROM loans WHERE customerId = c.id) AS totalGiven,
+            (SELECT COALESCE(SUM(e.emiAmount), 0)
+                FROM emis e
+                JOIN loans l ON l.id = e.loanId
+                WHERE l.customerId = c.id
+            ) AS totalPaid,
             (SELECT COALESCE(SUM(remainingAmount), 0) FROM loans WHERE customerId = c.id) AS totalDue,
             (SELECT COUNT(*) FROM loans WHERE customerId = c.id) AS totalLoans
         FROM customers c

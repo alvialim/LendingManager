@@ -75,9 +75,13 @@ fun LoanCard(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "₹${NumberHelper.formatMoney(loan.loanAmount)} → ₹${NumberHelper.formatMoney(loan.remainingAmount)} due",
+                            text = if (loanType == "MONTHLY") {
+                                "₹${NumberHelper.formatMoney(loan.loanAmount)}"
+                            } else {
+                                "₹${NumberHelper.formatMoney(loan.loanAmount)} → ₹${NumberHelper.formatMoney(loan.remainingAmount)} due"
+                            },
                             style = MaterialTheme.typography.titleSmall,
-                            color = Color(0xFFF44336),
+                            color = if (loanType == "MONTHLY") MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFFF44336),
                             maxLines = 2
                         )
                     }

@@ -45,6 +45,28 @@ import kotlinx.coroutines.withContext
 private fun decodeSkia(bytes: ByteArray): ImageBitmap? =
     runCatching { SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
 
+/**
+ * Desktop perf: decoding images from disk is expensive and can cause jank when scrolling large lists.
+ * Keep a small LRU cache of decoded bitmaps keyed by photo path.
+ */
+private object DesktopAvatarBitmapCache {
+    // Lower cap: Windows 10 + 4GB RAM needs tighter memory bounds.
+    private const val MAX_ENTRIES = 80
+    private val map = object : LinkedHashMap<String, ImageBitmap>(MAX_ENTRIES, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>?): Boolean {
+            return size > MAX_ENTRIES
+        }
+    }
+
+    @Synchronized
+    fun get(path: String): ImageBitmap? = map[path]
+
+    @Synchronized
+    fun put(path: String, bitmap: ImageBitmap) {
+        map[path] = bitmap
+    }
+}
+
 @Composable
 actual fun CustomerAvatar(
     photoPath: String?,
@@ -53,9 +75,21 @@ actual fun CustomerAvatar(
     onClick: (() -> Unit)?,
 ) {
     val bitmap: ImageBitmap? by produceState<ImageBitmap?>(initialValue = null, key1 = photoPath) {
-        value = if (photoPath.isNullOrBlank()) null else withContext(Dispatchers.IO) {
+        if (photoPath.isNullOrBlank()) {
+            value = null
+            return@produceState
+        }
+
+        DesktopAvatarBitmapCache.get(photoPath)?.let { cached ->
+            value = cached
+            return@produceState
+        }
+
+        value = withContext(Dispatchers.IO) {
             val bytes = readLocalPhotoBytes(photoPath)
             bytes?.let(::decodeSkia)
+        }?.also { decoded ->
+            DesktopAvatarBitmapCache.put(photoPath, decoded)
         }
     }
     val base = modifier
@@ -99,9 +133,7 @@ actual fun CustomerAvatarBytes(
         value = if (photoBytes == null || photoBytes.isEmpty()) {
             null
         } else {
-            withContext(Dispatchers.IO) {
-                decodeSkia(photoBytes)
-            }
+            withContext(Dispatchers.IO) { decodeSkia(photoBytes) }
         }
     }
     val base = modifier
