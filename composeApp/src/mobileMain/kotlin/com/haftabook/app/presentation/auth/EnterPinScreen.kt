@@ -1,6 +1,7 @@
 package com.haftabook.app.presentation.auth
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.haftabook.app.presentation.components.ResponsiveCentered
 enum class PinEntryMode {
     /** First launch: create a new PIN. */
     Create,
@@ -50,53 +52,55 @@ fun EnterPinScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = when (mode) {
-                PinEntryMode.Create -> "Create PIN"
-                PinEntryMode.Enter -> "Enter PIN"
-            },
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Use the keypad — $PIN_LEN digits",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(24.dp))
-        PinDotsRow(length = PIN_LEN, filled = digits.length)
-        if (errorMessage != null) {
-            Spacer(Modifier.height(12.dp))
+    ResponsiveCentered(modifier = modifier) { inner ->
+        Column(
+            modifier = inner
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
             Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
+                text = when (mode) {
+                    PinEntryMode.Create -> "Create PIN"
+                    PinEntryMode.Enter -> "Enter PIN"
+                },
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Use the keypad — $PIN_LEN digits",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-        }
-        Spacer(Modifier.height(32.dp))
-        PinKeypad(
-            modifier = Modifier.fillMaxWidth(),
-            onDigit = { d ->
-                if (digits.length < PIN_LEN) setDigits(digits + d)
-            },
-            onBackspace = {
-                if (digits.isNotEmpty()) setDigits(digits.dropLast(1))
-            },
-        )
-        if (mode == PinEntryMode.Enter) {
             Spacer(Modifier.height(24.dp))
-            TextButton(onClick = onForgotPin) {
-                Text("Forgot PIN?")
+            PinDotsRow(length = PIN_LEN, filled = digits.length)
+            if (errorMessage != null) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(32.dp))
+            PinKeypad(
+                modifier = Modifier.fillMaxWidth(),
+                onDigit = { d ->
+                    if (digits.length < PIN_LEN) setDigits(digits + d)
+                },
+                onBackspace = {
+                    if (digits.isNotEmpty()) setDigits(digits.dropLast(1))
+                },
+            )
+            if (mode == PinEntryMode.Enter) {
+                Spacer(Modifier.height(24.dp))
+                TextButton(onClick = onForgotPin) {
+                    Text("Forgot PIN?")
+                }
             }
         }
     }

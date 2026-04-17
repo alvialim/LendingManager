@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.haftabook.app.domain.usecase.AnalyticsBucket
 import com.haftabook.app.domain.usecase.AnalyticsGranularity
+import com.haftabook.app.presentation.components.ResponsiveCentered
 import com.haftabook.app.ui.PaidAmountGreen
 import com.haftabook.app.utils.NumberHelper
 
@@ -69,12 +70,18 @@ fun AnalyticsScreen(
             )
         }
     ) { padding ->
-        Column(
+        ResponsiveCentered(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-        ) {
+                .padding(padding),
+            expandedMaxWidth = 980.dp,
+            contentAlignment = Alignment.TopCenter
+        ) { inner ->
+            Column(
+                modifier = inner
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -153,6 +160,7 @@ fun AnalyticsScreen(
                         .fillMaxWidth()
                         .weight(1f)
                 )
+            }
             }
         }
     }

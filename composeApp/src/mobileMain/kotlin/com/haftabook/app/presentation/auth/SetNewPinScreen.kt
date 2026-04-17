@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.haftabook.app.presentation.components.ResponsiveCentered
 
 private const val PIN_LEN = 4
 
@@ -36,81 +37,83 @@ fun SetNewPinScreen(
 
     val dotsFilled = if (phase == 0) first.length else second.length
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = if (phase == 0) "Set new PIN" else "Confirm new PIN",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Enter the same $PIN_LEN-digit PIN twice.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        if (mismatchError) {
-            Spacer(Modifier.height(8.dp))
+    ResponsiveCentered(modifier = modifier) { inner ->
+        Column(
+            modifier = inner
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
             Text(
-                text = "PINs did not match. Try again.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
+                text = if (phase == 0) "Set new PIN" else "Confirm new PIN",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.height(8.dp))
-            TextButton(
-                onClick = {
-                    mismatchError = false
-                    phase = 0
-                    first = ""
-                    second = ""
-                },
-            ) {
-                Text("Start over")
+            Text(
+                text = "Enter the same $PIN_LEN-digit PIN twice.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            if (mismatchError) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "PINs did not match. Try again.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = {
+                        mismatchError = false
+                        phase = 0
+                        first = ""
+                        second = ""
+                    },
+                ) {
+                    Text("Start over")
+                }
             }
-        }
-        Spacer(Modifier.height(24.dp))
-        PinDotsRow(length = PIN_LEN, filled = dotsFilled)
-        Spacer(Modifier.height(32.dp))
-        PinKeypad(
-            modifier = Modifier.fillMaxWidth(),
-            onDigit = { d ->
-                if (phase == 0) {
-                    if (first.length < PIN_LEN) {
-                        first += d
-                        if (first.length == PIN_LEN) phase = 1
-                    }
-                } else {
-                    if (second.length < PIN_LEN) {
-                        second += d
-                        if (second.length == PIN_LEN) {
-                            if (first == second) {
-                                onNewPinConfirmed(second)
-                            } else {
-                                mismatchError = true
-                                second = ""
+            Spacer(Modifier.height(24.dp))
+            PinDotsRow(length = PIN_LEN, filled = dotsFilled)
+            Spacer(Modifier.height(32.dp))
+            PinKeypad(
+                modifier = Modifier.fillMaxWidth(),
+                onDigit = { d ->
+                    if (phase == 0) {
+                        if (first.length < PIN_LEN) {
+                            first += d
+                            if (first.length == PIN_LEN) phase = 1
+                        }
+                    } else {
+                        if (second.length < PIN_LEN) {
+                            second += d
+                            if (second.length == PIN_LEN) {
+                                if (first == second) {
+                                    onNewPinConfirmed(second)
+                                } else {
+                                    mismatchError = true
+                                    second = ""
+                                }
                             }
                         }
                     }
-                }
-            },
-            onBackspace = {
-                if (phase == 0) {
-                    if (first.isNotEmpty()) first = first.dropLast(1)
-                } else {
-                    if (second.isNotEmpty()) second = second.dropLast(1)
-                    else phase = 0
-                }
-            },
-        )
-        Spacer(Modifier.height(24.dp))
-        TextButton(onClick = onCancel) {
-            Text("Cancel")
+                },
+                onBackspace = {
+                    if (phase == 0) {
+                        if (first.isNotEmpty()) first = first.dropLast(1)
+                    } else {
+                        if (second.isNotEmpty()) second = second.dropLast(1)
+                        else phase = 0
+                    }
+                },
+            )
+            Spacer(Modifier.height(24.dp))
+            TextButton(onClick = onCancel) {
+                Text("Cancel")
+            }
         }
     }
 }

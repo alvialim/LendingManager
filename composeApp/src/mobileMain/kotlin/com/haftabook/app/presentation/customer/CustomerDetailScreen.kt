@@ -23,6 +23,7 @@ import com.haftabook.app.presentation.components.CustomerAvatar
 import com.haftabook.app.presentation.components.DeleteActionButton
 import com.haftabook.app.ui.FabBlue
 import com.haftabook.app.ui.PaidAmountGreen
+import com.haftabook.app.presentation.components.ResponsiveCentered
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,22 +101,27 @@ fun CustomerDetailScreen(
             }
         }
     ) { padding ->
-        LazyColumn(
+        ResponsiveCentered(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 16.dp,
-                end = 16.dp,
-                bottom = 96.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                customer?.let { CustomerSummaryCard(it) }
-            }
+            expandedMaxWidth = 980.dp,
+            contentAlignment = Alignment.TopCenter
+        ) { inner ->
+            LazyColumn(
+                modifier = inner.fillMaxWidth(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = 16.dp,
+                    end = 16.dp,
+                    bottom = 96.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    customer?.let { CustomerSummaryCard(it) }
+                }
 
             viewModel.errorMessage?.let { err ->
                 item {
@@ -180,6 +186,7 @@ fun CustomerDetailScreen(
                         }
                     )
                 }
+            }
             }
         }
     }

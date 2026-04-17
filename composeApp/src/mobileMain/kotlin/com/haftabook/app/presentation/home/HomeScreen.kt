@@ -36,6 +36,7 @@ import com.haftabook.app.platform.RequestMediaPermissionsOnHome
 import com.haftabook.app.data.sync.SyncDiagnostics
 import com.haftabook.app.utils.CommunicationHelper
 import com.haftabook.app.utils.NumberHelper
+import com.haftabook.app.presentation.components.ResponsiveCentered
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,12 +101,17 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        Column(
+        ResponsiveCentered(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(padding)
-        ) {
+                .padding(padding),
+            expandedMaxWidth = 980.dp,
+            contentAlignment = Alignment.TopCenter
+        ) { inner ->
+            Column(
+                modifier = inner.fillMaxWidth()
+            ) {
             if (!syncError.isNullOrBlank()) {
                 Card(
                     modifier = Modifier
@@ -175,6 +181,7 @@ fun HomeScreen(
                     onSendMessage = { CommunicationHelper.sendCustomerMessage(it) },
                     onSendSms = { CommunicationHelper.openSmsToAdminWithCustomer(it) }
                 )
+            }
             }
         }
     }
