@@ -21,7 +21,7 @@ ksp = "2.1.0-1.0.29"
 # GitLive 2.4+ uses Google Firebase main modules (no *-ktx); align BOM with GitLive (see firebase-database-android.module).
 firebase = "2.4.0"
 # JVM/desktop: provides com.google.firebase.FirebasePlatform for GitLive (not in dev.gitlive.firebase).
-firebase-java-sdk = "0.6.2"
+firebase-java-sdk = "0.6.3"
 sqlite = "2.5.0-alpha12"
 googleGmsGoogleServices = "4.4.4"
 firebaseBom = "33.15.0"

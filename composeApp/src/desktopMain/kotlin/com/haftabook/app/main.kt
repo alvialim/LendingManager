@@ -28,7 +28,11 @@ import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 
-fun main() = application {
+fun main() {
+    // Must be set before Netty / gRPC classes initialize (Firebase desktop uses GitLive JVM stack).
+    System.setProperty("io.netty.noUnsafe", "true")
+
+    application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "Star Group",
@@ -101,5 +105,6 @@ fun main() = application {
                 }
             }
         }
+    }
     }
 }
