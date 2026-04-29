@@ -67,8 +67,7 @@ kotlin {
                 implementation(libs.compose.ui)
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.uiToolingPreview)
-                implementation(libs.compose.icons.extended)
-
+                implementation(compose.materialIconsExtended)
                 implementation(libs.androidx.lifecycle.viewmodelCompose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
 
@@ -199,7 +198,7 @@ compose.desktop {
         )
         nativeDistributions {
             // Windows: build .exe / .msi on Windows only (no cross-compile). macOS: .dmg, Linux: .deb
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi, TargetFormat.Exe)
             packageName = "com.haftabook.app"
             packageVersion = "1.0.0"
         }
