@@ -31,6 +31,8 @@ import com.haftabook.app.presentation.components.ResponsiveCentered
 fun SettingsScreen(
     isDarkTheme: Boolean,
     onDarkThemeChange: (Boolean) -> Unit,
+    isShowMonthlyEnabled: Boolean,
+    onShowMonthlyChange: (Boolean) -> Unit,
     onAnalyticsClick: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -78,6 +80,28 @@ fun SettingsScreen(
                         Switch(
                             checked = isDarkTheme,
                             onCheckedChange = onDarkThemeChange
+                        )
+                    }
+                }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Show Monthly",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Switch(
+                            checked = isShowMonthlyEnabled,
+                            onCheckedChange = onShowMonthlyChange
                         )
                     }
                 }

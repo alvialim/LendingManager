@@ -8,4 +8,3 @@ data class SupabaseConfig(
         get() = url.trimEnd('/') + "/rest/v1"
 }
 
-expect fun loadSupabaseConfig(): SupabaseConfig?

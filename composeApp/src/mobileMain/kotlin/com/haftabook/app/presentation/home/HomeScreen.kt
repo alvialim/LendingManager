@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Share
@@ -42,7 +41,7 @@ import com.haftabook.app.presentation.components.ResponsiveCentered
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onOpenDrawer: () -> Unit,
+    loanTypeFilter: String,
     onCustomerClick: (Long) -> Unit,
     onCustomerPhotoClick: (String) -> Unit,
 ) {
@@ -50,8 +49,8 @@ fun HomeScreen(
     val customers by viewModel.customers.collectAsState()
     val syncError by SyncDiagnostics.lastError.collectAsState()
     val tabTotals by viewModel.tabTotals.collectAsState()
-    val selectedTab by viewModel.selectedTab.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val showDue = loanTypeFilter != "MONTHLY"
     var isSearchActive by remember { mutableStateOf(false) }
     var customerToDelete by remember { mutableStateOf<Customer?>(null) }
 
@@ -62,8 +61,7 @@ fun HomeScreen(
                     totals = tabTotals,
                     query = searchQuery,
                     onQueryChange = { viewModel.onSearchQueryChange(it) },
-                    onOpenDrawer = onOpenDrawer,
-                    showDue = selectedTab != 0,
+                    showDue = showDue,
                     onCloseClick = {
                         isSearchActive = false
                         viewModel.onSearchQueryChange("")
@@ -71,12 +69,7 @@ fun HomeScreen(
                 )
             } else {
                 TopAppBar(
-                    title = { HomeToolbarTotalsRow(totals = tabTotals, showDue = selectedTab != 0) },
-                    navigationIcon = {
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
-                        }
-                    },
+                    title = { HomeToolbarTotalsRow(totals = tabTotals, showDue = showDue) },
                     actions = {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Search")
@@ -128,41 +121,6 @@ fun HomeScreen(
                     )
                 }
             }
-            TabRow(selectedTabIndex = selectedTab) {
-                Tab(
-                    selected = selectedTab == 0,
-                    modifier = if(selectedTab==0) Modifier.background(Color(0xFFDAE5FF)) else Modifier.background(Color.Transparent) ,
-                    onClick = { viewModel.onTabChanged(0) },
-                    text = {
-                        Text(
-                            "Monthly",
-                            color = if (selectedTab == 0) {
-                                Color(0xFF2563EB)
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-
-                        )
-                    }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    modifier = if(selectedTab==1) Modifier.background(Color(0xFFD8E4FF)) else Modifier.background(Color.Transparent) ,
-
-                    onClick = { viewModel.onTabChanged(1) },
-                    text = {
-                        Text(
-                            "Daily",
-                            color = if (selectedTab == 1) {
-                                Color(0xFF2563EB)
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                            )
-                    }
-                )
-            }
-
             PullToRefreshBox(
                 isRefreshing = viewModel.isRefreshing,
                 onRefresh = {
@@ -294,7 +252,6 @@ fun SearchTopBar(
     totals: HomeTabTotals,
     query: String,
     onQueryChange: (String) -> Unit,
-    onOpenDrawer: () -> Unit,
     showDue: Boolean,
     onCloseClick: () -> Unit
 ) {
@@ -324,13 +281,8 @@ fun SearchTopBar(
             }
         },
         navigationIcon = {
-            Row {
-                IconButton(onClick = onOpenDrawer) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu")
-                }
-                IconButton(onClick = onCloseClick) {
-                    Icon(Icons.Default.Close, contentDescription = "Close Search")
-                }
+            IconButton(onClick = onCloseClick) {
+                Icon(Icons.Default.Close, contentDescription = "Close Search")
             }
         }
     )

@@ -6,9 +6,3 @@ private fun envOrProp(envName: String, propName: String = envName.lowercase().re
     return System.getProperty(propName)?.trim().orEmpty()
 }
 
-actual fun loadSupabaseConfig(): SupabaseConfig? {
-    val url = envOrProp("SUPABASE_URL", "supabase.url")
-    val key = envOrProp("SUPABASE_ANON_KEY", "supabase.anon.key")
-    if (url.isBlank() || key.isBlank()) return null
-    return SupabaseConfig(url, key)
-}

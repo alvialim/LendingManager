@@ -36,8 +36,9 @@ private const val PIN_LEN = 4
 fun EnterPinScreen(
     mode: PinEntryMode,
     onPinComplete: (pin: String) -> Unit,
-    onForgotPin: () -> Unit,
     errorMessage: String?,
+    showForgotPin: Boolean = false,
+    onForgotPin: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var digits by remember { mutableStateOf("") }
@@ -48,7 +49,6 @@ fun EnterPinScreen(
         digits = new
         if (new.length == PIN_LEN) {
             onPinComplete(new)
-            digits = ""
         }
     }
 
@@ -96,7 +96,7 @@ fun EnterPinScreen(
                     if (digits.isNotEmpty()) setDigits(digits.dropLast(1))
                 },
             )
-            if (mode == PinEntryMode.Enter) {
+            if (mode == PinEntryMode.Enter && showForgotPin) {
                 Spacer(Modifier.height(24.dp))
                 TextButton(onClick = onForgotPin) {
                     Text("Forgot PIN?")

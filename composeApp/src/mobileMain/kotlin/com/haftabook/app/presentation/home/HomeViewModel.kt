@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,14 +34,13 @@ data class HomeTabTotals(
 )
 
 class HomeViewModel(
+    private val loanTypeFilter: String,
     private val getCustomersUseCase: GetCustomersUseCase,
     private val addCustomerUseCase: AddCustomerUseCase,
     private val updateCustomerPhotoUseCase: UpdateCustomerPhotoUseCase,
     private val deleteCustomerUseCase: DeleteCustomerUseCase,
     private val requestSyncNow: suspend () -> Unit = {},
 ) : ViewModel() {
-
-    private val selectedTabFlow = MutableStateFlow(0)
     private val searchQueryFlow = MutableStateFlow("")
 
     /**
@@ -77,7 +77,6 @@ class HomeViewModel(
         }
     }
 
-    val selectedTab: StateFlow<Int> = selectedTabFlow.asStateFlow()
     val searchQuery: StateFlow<String> = searchQueryFlow.asStateFlow()
 
     var showAddDialog by mutableStateOf(false)
@@ -86,12 +85,10 @@ class HomeViewModel(
     var isRefreshing by mutableStateOf(false)
 
     val customers: StateFlow<List<Customer>> = combine(
-        selectedTabFlow,
         searchQueryFlow,
         customerListRaw
-    ) { tabIndex, query, allCustomers ->
-        val type = if (tabIndex == 0) "MONTHLY" else "DAILY"
-        val forTab = allCustomers.filter { it.loanType == type }
+    ) { query, allCustomers ->
+        val forTab = allCustomers.filter { it.loanType == loanTypeFilter }
         if (query.isBlank()) forTab
         else forTab.filter { customer ->
             customer.name.contains(query, ignoreCase = true) ||
@@ -106,12 +103,8 @@ class HomeViewModel(
         initialValue = emptyList()
     )
 
-    val tabTotals: StateFlow<HomeTabTotals> = combine(
-        selectedTabFlow,
-        customerListRaw
-    ) { tabIndex, allCustomers ->
-        val type = if (tabIndex == 0) "MONTHLY" else "DAILY"
-        val list = allCustomers.filter { it.loanType == type }
+    val tabTotals: StateFlow<HomeTabTotals> = customerListRaw.map { allCustomers ->
+        val list = allCustomers.filter { it.loanType == loanTypeFilter }
         HomeTabTotals(
             totalGiven = list.sumOf { it.totalGiven },
             totalPaid = list.sumOf { it.totalPaid },
@@ -122,10 +115,6 @@ class HomeViewModel(
         started = SharingStarted.Eagerly,
         initialValue = HomeTabTotals(0L, 0L, 0L)
     )
-
-    fun onTabChanged(index: Int) {
-        selectedTabFlow.value = index
-    }
 
     fun onSearchQueryChange(newQuery: String) {
         searchQueryFlow.value = newQuery
@@ -156,7 +145,7 @@ class HomeViewModel(
     }
 
     fun onAddCustomer(name: String, mobile: String, photoBytes: ByteArray?) {
-        val loanType = if (selectedTabFlow.value == 0) "MONTHLY" else "DAILY"
+        val loanType = loanTypeFilter
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
             try {

@@ -3,6 +3,7 @@ package com.haftabook.app.preferences
 import java.util.prefs.Preferences
 
 private const val KEY_DARK_THEME = "dark_theme"
+private const val KEY_SHOW_MONTHLY = "show_monthly"
 
 actual object ThemePreferences {
     private val node: Preferences
@@ -12,5 +13,11 @@ actual object ThemePreferences {
 
     actual fun setDarkTheme(value: Boolean) {
         node.putBoolean(KEY_DARK_THEME, value)
+    }
+
+    actual fun isShowMonthlyEnabled(): Boolean = node.getBoolean(KEY_SHOW_MONTHLY, false)
+
+    actual fun setShowMonthlyEnabled(value: Boolean) {
+        node.putBoolean(KEY_SHOW_MONTHLY, value)
     }
 }

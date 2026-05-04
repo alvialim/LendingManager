@@ -16,6 +16,7 @@ import com.haftabook.app.ui.HaftabookTheme
 @Composable
 fun App(container: AppContainer) {
     var isDarkTheme by remember { mutableStateOf(ThemePreferences.isDarkTheme()) }
+    var isShowMonthlyEnabled by remember { mutableStateOf(ThemePreferences.isShowMonthlyEnabled()) }
 
     HaftabookTheme(darkTheme = isDarkTheme) {
         SystemBarsTheme(darkTheme = isDarkTheme)
@@ -23,9 +24,14 @@ fun App(container: AppContainer) {
             AppNavigation(
                 container = container,
                 isDarkTheme = isDarkTheme,
+                isShowMonthlyEnabled = isShowMonthlyEnabled,
                 onDarkThemeChange = { dark ->
                     isDarkTheme = dark
                     ThemePreferences.setDarkTheme(dark)
+                },
+                onShowMonthlyChange = { showMonthly ->
+                    isShowMonthlyEnabled = showMonthly
+                    ThemePreferences.setShowMonthlyEnabled(showMonthly)
                 }
             )
         }

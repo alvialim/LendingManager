@@ -10,6 +10,7 @@ import com.haftabook.app.domain.usecase.UpdateCustomerPhotoUseCase
 import kotlin.reflect.KClass
 
 class HomeViewModelFactory(
+    private val loanTypeFilter: String,
     private val getCustomersUseCase: GetCustomersUseCase,
     private val addCustomerUseCase: AddCustomerUseCase,
     private val updateCustomerPhotoUseCase: UpdateCustomerPhotoUseCase,
@@ -19,6 +20,7 @@ class HomeViewModelFactory(
         if (modelClass == HomeViewModel::class) {
             @Suppress("UNCHECKED_CAST")
             return HomeViewModel(
+                loanTypeFilter = loanTypeFilter,
                 getCustomersUseCase = getCustomersUseCase,
                 addCustomerUseCase = addCustomerUseCase,
                 updateCustomerPhotoUseCase = updateCustomerPhotoUseCase,
