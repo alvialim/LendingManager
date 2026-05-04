@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -44,6 +45,7 @@ fun HomeScreen(
     loanTypeFilter: String,
     onCustomerClick: (Long) -> Unit,
     onCustomerPhotoClick: (String) -> Unit,
+    onBack: () -> Unit,
 ) {
     RequestMediaPermissionsOnHome()
     val customers by viewModel.customers.collectAsState()
@@ -70,6 +72,11 @@ fun HomeScreen(
             } else {
                 TopAppBar(
                     title = { HomeToolbarTotalsRow(totals = tabTotals, showDue = showDue) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
                     actions = {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Search")

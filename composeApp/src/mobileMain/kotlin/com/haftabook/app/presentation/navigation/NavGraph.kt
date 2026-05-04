@@ -159,6 +159,11 @@ fun AppNavigation(
                     },
                     onCustomerPhotoClick = { path ->
                         stack = stack + AppDestination.CustomerPhoto(path)
+                    },
+                    onBack = {
+                        selectedPinType = null
+                        launchStage = AppLaunchStage.Dashboard
+                        stack = listOf(AppDestination.Home)
                     }
                 )
             }
