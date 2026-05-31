@@ -6,3 +6,4 @@ private fun envOrProp(envName: String, propName: String = envName.lowercase().re
     return System.getProperty(propName)?.trim().orEmpty()
 }
 
+    

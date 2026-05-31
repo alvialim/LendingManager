@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 enum class PinType {
     MONTHLY,
     DAILY,
+    MONTHLY_SETTINGS
 }
 
 @Serializable
@@ -16,6 +17,7 @@ private data class PinManagementRemote(
     @SerialName("daily_pin") val dailyPinSnake: String = "",
     @SerialName("pinMonthly") val monthlyPinCamel: String = "",
     @SerialName("pinDaily") val dailyPinCamel: String = "",
+    @SerialName("pinMonthlySettings") val pinMonthlySettings: String = "",
 )
 
 object PinManagementConfig {
@@ -36,6 +38,9 @@ object PinManagementConfig {
                     }
                     PinType.DAILY -> {
                         parsed.dailyPinSnake.trim().ifBlank { parsed.dailyPinCamel.trim() }
+                    }
+                    PinType.MONTHLY_SETTINGS -> {
+                        parsed.pinMonthlySettings.trim()
                     }
                 }
             }

@@ -19,9 +19,10 @@ import kotlin.math.ceil
 fun AddLoanDialog(
     loanType: String,
     onDismiss: () -> Unit,
-    onConfirm: (amount: Long, interest: Long?, loanStartDate: Long, emiStartDate: Long, totalEmis: Int) -> Unit,
+    onConfirm: (Long, Long?, Long, Long, Int) -> Unit,
     errorMessage: String?
 ) {
+    val isMonthly = loanType == "MONTHLY"
     var amount by remember { mutableStateOf("") }
     var interest by remember { mutableStateOf("") }
     val dialogBaselineLoanStart = remember { DateHelper.now() }
@@ -29,7 +30,8 @@ fun AddLoanDialog(
     var emiStartDate by remember {
         mutableStateOf(DateHelper.firstEmiDateFromLoanStart(dialogBaselineLoanStart, loanType))
     }
-    var totalEmis by remember { mutableStateOf("") } // DAILY only; MONTHLY is fixed 12
+    // For Monthly, total EMIs is static 12
+    var totalEmis by remember { mutableStateOf(if (isMonthly) "12" else "") }
     var showLoanDatePicker by remember { mutableStateOf(false) }
     var showEmiDatePicker by remember { mutableStateOf(false) }
 
@@ -38,7 +40,7 @@ fun AddLoanDialog(
     }
 
     val lastEmiDate = remember(emiStartDate, totalEmis, loanType) {
-        val emis = if (loanType == "MONTHLY") 12 else (totalEmis.toIntOrNull() ?: 0)
+        val emis = totalEmis.toIntOrNull() ?: 0
         if (emis > 0) {
             when (loanType) {
                 "DAILY" -> DateHelper.addDays(emiStartDate, emis - 1)
@@ -50,8 +52,8 @@ fun AddLoanDialog(
         }
     }
 
-    val emiAmount = remember(loanType, amount, interest, totalEmis) {
-        if (loanType == "MONTHLY") {
+    val emiAmount = remember(amount, interest, totalEmis, isMonthly) {
+        if (isMonthly) {
             interest.toLongOrNull() ?: 0L
         } else {
             val amt = amount.toDoubleOrNull() ?: 0.0
@@ -98,7 +100,7 @@ fun AddLoanDialog(
                     )
                 )
 
-                if (loanType == "MONTHLY") {
+                if (isMonthly) {
                     OutlinedTextField(
                         value = interest,
                         onValueChange = {
@@ -109,7 +111,9 @@ fun AddLoanDialog(
                         label = { Text("Interest (₹)") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF87CEFA),
                             unfocusedBorderColor = Color(0xFF87CEFA),
@@ -157,50 +161,32 @@ fun AddLoanDialog(
                     )
                 )
 
-                if (loanType != "MONTHLY") {
-                    OutlinedTextField(
-                        value = totalEmis,
-                        onValueChange = {
+                OutlinedTextField(
+                    value = totalEmis,
+                    onValueChange = {
+                        if (!isMonthly) {
                             if (it.isEmpty() || it.all { char -> char.isDigit() }) {
                                 totalEmis = it
                             }
-                        },
-                        label = { Text("Total EMIs") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF87CEFA),
-                            unfocusedBorderColor = Color(0xFF87CEFA),
-                            disabledBorderColor = Color(0xFF87CEFA),
-                            errorBorderColor = MaterialTheme.colorScheme.error,
-                        )
+                        }
+                    },
+                    label = { Text("Total EMIs") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isMonthly,
+                    readOnly = isMonthly,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF87CEFA),
+                        unfocusedBorderColor = Color(0xFF87CEFA),
+                        disabledBorderColor = Color(0xFF87CEFA),
+                        errorBorderColor = MaterialTheme.colorScheme.error,
                     )
-                } else {
-                    OutlinedTextField(
-                        value = "12",
-                        onValueChange = {},
-                        label = { Text("Total EMIs") },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true,
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF87CEFA),
-                            unfocusedBorderColor = Color(0xFF87CEFA),
-                            disabledBorderColor = Color(0xFF87CEFA),
-                            errorBorderColor = MaterialTheme.colorScheme.error,
-                        )
-                    )
-                }
+                )
 
-                val showPreview = if (loanType == "MONTHLY") {
-                    (interest.toLongOrNull() ?: 0L) > 0L
-                } else {
-                    totalEmis.isNotEmpty() && totalEmis.toIntOrNull() != null && totalEmis.toInt() > 0
-                }
-                if (showPreview) {
+                if (totalEmis.isNotEmpty() && totalEmis.toIntOrNull() != null && totalEmis.toInt() > 0) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             text = "EMI Amount: ₹$emiAmount",
@@ -220,13 +206,14 @@ fun AddLoanDialog(
             Button(
                 onClick = {
                     val amt = amount.toLongOrNull()
-                    val isMonthly = loanType == "MONTHLY"
-                    val emis = if (isMonthly) 12 else totalEmis.toIntOrNull()
-                    val interestAmt = if (isMonthly) interest.toLongOrNull() else null
+                    val intr = interest.toLongOrNull()
+                    val emis = totalEmis.toIntOrNull()
                     if (amt != null && amt > 0 && emis != null && emis > 0) {
-                        if (!isMonthly || (interestAmt != null && interestAmt > 0L)) {
-                            onConfirm(amt, interestAmt, loanStartDate, emiStartDate, emis)
+                        if (isMonthly && (intr == null || intr <= 0)) {
+                            // Validation handled in UseCase or locally?
+                            // Let's assume onConfirm takes both.
                         }
+                        onConfirm(amt, intr, loanStartDate, emiStartDate, emis)
                     }
                 }
             ) {

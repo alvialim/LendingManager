@@ -34,6 +34,7 @@ private sealed interface AppDestination {
     data class CustomerPhoto(val photoPath: String) : AppDestination
     data object Settings : AppDestination
     data object Analytics : AppDestination
+    data object SettingsPinLock : AppDestination
 }
 
 private sealed interface AppLaunchStage {
@@ -71,6 +72,16 @@ fun AppNavigation(
         delay(1200L)
         if (launchStage == AppLaunchStage.Splash) {
             launchStage = AppLaunchStage.Dashboard
+        }
+    }
+
+    fun navigateTo(dest: AppDestination) {
+        stack = stack + dest
+    }
+
+    fun goBack() {
+        if (stack.size > 1) {
+            stack = stack.dropLast(1)
         }
     }
 
@@ -121,7 +132,7 @@ fun AppNavigation(
                     scope.launch {
                         drawerState.close()
                         if (stack.last() != AppDestination.Settings) {
-                            stack = stack + AppDestination.Settings
+                            navigateTo(AppDestination.Settings)
                         }
                     }
                 }
@@ -155,10 +166,10 @@ fun AppNavigation(
                     viewModel = keyedViewModel,
                     loanTypeFilter = activeLoanType,
                     onCustomerClick = { customerId ->
-                        stack = stack + AppDestination.CustomerDetail(customerId)
+                        navigateTo(AppDestination.CustomerDetail(customerId))
                     },
                     onCustomerPhotoClick = { path ->
-                        stack = stack + AppDestination.CustomerPhoto(path)
+                        navigateTo(AppDestination.CustomerPhoto(path))
                     },
                     onBack = {
                         selectedPinType = null
@@ -171,7 +182,7 @@ fun AppNavigation(
 
         is AppDestination.CustomerDetail -> {
             PlatformBackHandler(enabled = stack.size > 1) {
-                stack = stack.dropLast(1)
+                goBack()
             }
             val customerId = current.customerId
             val viewModel: CustomerDetailViewModel = viewModel(key = "customer_$customerId") {
@@ -189,50 +200,65 @@ fun AppNavigation(
             CustomerDetailScreen(
                 viewModel = viewModel,
                 onBack = {
-                    if (stack.size > 1) {
-                        stack = stack.dropLast(1)
-                    }
+                    goBack()
                 }
             )
         }
 
         is AppDestination.CustomerPhoto -> {
             PlatformBackHandler(enabled = stack.size > 1) {
-                stack = stack.dropLast(1)
+                goBack()
             }
             CustomerPhotoZoomScreen(
                 photoPath = current.photoPath,
                 onBack = {
-                    if (stack.size > 1) stack = stack.dropLast(1)
+                    goBack()
                 }
             )
         }
 
         AppDestination.Settings -> {
             PlatformBackHandler(enabled = stack.size > 1) {
-                stack = stack.dropLast(1)
+                goBack()
             }
             SettingsScreen(
                 isDarkTheme = isDarkTheme,
                 onDarkThemeChange = onDarkThemeChange,
                 isShowMonthlyEnabled = isShowMonthlyEnabled,
-                onShowMonthlyChange = onShowMonthlyChange,
+                onShowMonthlyChange = { enabled ->
+                    if (enabled) {
+                        navigateTo(AppDestination.SettingsPinLock)
+                    } else {
+                        onShowMonthlyChange(false)
+                    }
+                },
                 onAnalyticsClick = {
                     if (stack.last() != AppDestination.Analytics) {
-                        stack = stack + AppDestination.Analytics
+                        navigateTo(AppDestination.Analytics)
                     }
                 },
                 onBack = {
-                    if (stack.size > 1) {
-                        stack = stack.dropLast(1)
-                    }
+                    goBack()
+                }
+            )
+        }
+
+        AppDestination.SettingsPinLock -> {
+            PlatformBackHandler(enabled = true) {
+                goBack()
+            }
+            AuthFlow(
+                pinType = PinType.MONTHLY_SETTINGS,
+                onUnlocked = {
+                    onShowMonthlyChange(true)
+                    goBack()
                 }
             )
         }
 
         AppDestination.Analytics -> {
             PlatformBackHandler(enabled = stack.size > 1) {
-                stack = stack.dropLast(1)
+                goBack()
             }
             val analyticsViewModel: AnalyticsViewModel = viewModel(key = "analytics") {
                 AnalyticsViewModel(container.getAnalyticsUseCase)
@@ -240,9 +266,7 @@ fun AppNavigation(
             AnalyticsScreen(
                 viewModel = analyticsViewModel,
                 onBack = {
-                    if (stack.size > 1) {
-                        stack = stack.dropLast(1)
-                    }
+                    goBack()
                 }
             )
         }
