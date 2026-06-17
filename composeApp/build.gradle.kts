@@ -186,9 +186,19 @@ compose.desktop {
             "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
         )
         nativeDistributions {
+            modules(
+                "java.naming",
+                "java.sql",
+                "java.management",
+                "jdk.unsupported",
+                "java.security.jgss"
+            )
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
             packageName = "com.haftabook.app"
             packageVersion = "1.0.0"
+        }
+        buildTypes.release.proguard {
+            isEnabled.set(false)
         }
     }
 }
