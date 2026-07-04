@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 fun AuthFlow(
     pinType: PinType,
     onUnlocked: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     var expectedPin by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -47,6 +48,7 @@ fun AuthFlow(
                 mode = PinEntryMode.Enter,
                 onPinComplete = { },
                 errorMessage = null,
+                onBack = onBack,
             )
         }
 
@@ -55,6 +57,7 @@ fun AuthFlow(
                 mode = PinEntryMode.Enter,
                 onPinComplete = { },
                 errorMessage = loadError,
+                onBack = onBack,
             )
         }
 
@@ -70,6 +73,7 @@ fun AuthFlow(
                     }
                 },
                 errorMessage = enterPinError,
+                onBack = onBack,
             )
         }
     }

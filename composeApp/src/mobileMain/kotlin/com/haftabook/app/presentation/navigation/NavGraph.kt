@@ -105,6 +105,9 @@ fun AppNavigation(
                         drawerState.close()
                     }
                     stack = listOf(AppDestination.Home)
+                },
+                onBack = {
+                    launchStage = AppLaunchStage.Dashboard
                 }
             )
             return
@@ -251,6 +254,9 @@ fun AppNavigation(
                 pinType = PinType.MONTHLY_SETTINGS,
                 onUnlocked = {
                     onShowMonthlyChange(true)
+                    goBack()
+                },
+                onBack = {
                     goBack()
                 }
             )
